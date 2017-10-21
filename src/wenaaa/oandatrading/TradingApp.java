@@ -6,6 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import wenaaa.loginutils.ConsoleLogin;
 import wenaaa.loginutils.LoginData;
 import wenaaa.loginutils.NoConsoleException;
+import wenaaa.oandatrading.properties.PropertyManager;
 
 /**
  * Entry point for trading application. Gets login data and runs
@@ -20,10 +21,13 @@ public class TradingApp {
 
 	public static void main(final String[] args) throws IOException {
 
+		System.err.close();
 		final LoginData ld = getLoginData(args);
 		if (ld == null) {
 			return;
 		}
+
+		loadSettings();
 
 		startStopCondition();
 
@@ -32,8 +36,17 @@ public class TradingApp {
 		cleanUp();
 	}
 
+	public static void stop() {
+		stop = true;
+	}
+
+	private static void loadSettings() {
+		PropertyManager.loadSettings();
+	}
+
 	private static void cleanUp() {
 		activeTrader.stop();
+		LoggingUtils.stopLogging();
 	}
 
 	private static void trade(final LoginData ld) {
@@ -56,7 +69,7 @@ public class TradingApp {
 	}
 
 	private static void startStopCondition() {
-		new Thread(() -> {
+		final Thread t = new Thread(() -> {
 			try {
 				System.in.read();
 			} catch (final IOException e) {
@@ -64,7 +77,9 @@ public class TradingApp {
 			} finally {
 				stop = true;
 			}
-		}).start();
+		});
+		t.setDaemon(true);
+		t.start();
 	}
 
 	private static LoginData getLoginData(final String[] args) {
