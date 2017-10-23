@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+	<accounts>
+		<account id="13">
+			<tradedpairs>
+				<pair position="long">AUD/USD</pair>
+				<pair position="short">AUD/CAD</pair>
+				<pair position="short">USD/CAD</pair>
+			</tradedpairs>
+		</account>
+	</accounts>
+	<stoplosshandling>
+		<candles>100</candles>
+		<addedspace>1.1</addedspace>
+		<timeframe>M5</timeframe>
+	</stoplosshandling>
+</properties>

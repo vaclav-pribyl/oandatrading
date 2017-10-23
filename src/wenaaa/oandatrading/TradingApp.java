@@ -50,6 +50,7 @@ public class TradingApp {
 	}
 
 	private static void trade(final LoginData ld) {
+
 		while (!stop) {
 			try {
 				if (TRADE_LOCK.tryLock()) {
@@ -66,6 +67,7 @@ public class TradingApp {
 
 			}
 		}
+
 	}
 
 	private static void startStopCondition() {

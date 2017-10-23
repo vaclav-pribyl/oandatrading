@@ -52,7 +52,6 @@ public class Trader implements Runnable, Observer {
 
 	private void trade() {
 		try {
-			System.out.println("Trading...");
 			Thread.sleep(1000);
 		} catch (final InterruptedException e) {
 
@@ -84,7 +83,10 @@ public class Trader implements Runnable, Observer {
 					user = fxClient.getUser();
 
 					System.out.println("Setting account...");
-					account = (Account) user.getAccounts().elementAt(0);
+					for (final Object obj : user.getAccounts()) {
+						final Account acc = (Account) obj;
+						System.out.println(acc);
+					}
 
 					System.out.println("Fetching rate table...");
 					rateTable = fxClient.getRateTable();
