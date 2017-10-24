@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import wenaaa.loginutils.ConsoleLogin;
+import wenaaa.loginutils.LoggingUtils;
 import wenaaa.loginutils.LoginData;
 import wenaaa.loginutils.NoConsoleException;
 import wenaaa.oandatrading.properties.PropertyManager;
@@ -20,20 +21,21 @@ public class TradingApp {
 	private static final ReentrantLock TRADE_LOCK = new ReentrantLock();
 
 	public static void main(final String[] args) throws IOException {
+		try {
+			System.err.close();
+			final LoginData ld = getLoginData(args);
+			if (ld == null) {
+				return;
+			}
 
-		System.err.close();
-		final LoginData ld = getLoginData(args);
-		if (ld == null) {
-			return;
+			loadSettings();
+
+			startStopCondition();
+
+			trade(ld);
+		} finally {
+			cleanUp();
 		}
-
-		loadSettings();
-
-		startStopCondition();
-
-		trade(ld);
-
-		cleanUp();
 	}
 
 	public static void stop() {

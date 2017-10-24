@@ -11,7 +11,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import wenaaa.oandatrading.LoggingUtils;
+import wenaaa.loginutils.LoggingUtils;
 
 public class PropertiesHandler extends DefaultHandler {
 
