@@ -120,11 +120,15 @@ public class Trader implements Runnable, Observer {
 		final InfoBuilder uplIB = new InfoBuilder("Unrealized P/L");
 		double uPotLoss = 0.0;
 		final InfoBuilder navIB = new InfoBuilder("Net Asset Value");
+		double nav = 0.0;
 		final InfoBuilder muIB = new InfoBuilder("Margin Used");
 		final InfoBuilder maIB = new InfoBuilder("Margin Available");
 		final InfoBuilder pvIB = new InfoBuilder("Position Value");
+		double posValue = 0.0;
 		final InfoBuilder tIB = new InfoBuilder("Trades");
+		int trades = 0;
 		final InfoBuilder oIB = new InfoBuilder("Orders");
+		int orders = 0;
 		final Iterator<Account> iter = accounts.iterator();
 		while (iter.hasNext()) {
 			final Account acc = iter.next();
@@ -135,12 +139,34 @@ public class Trader implements Runnable, Observer {
 			final double upl = acc.getUnrealizedPL();
 			uPotLoss += upl;
 			uplIB.append(upl, false);
+			nav += bal + upl;
+			navIB.append(bal + upl, false);
+			muIB.append(acc.getMarginUsed(), last);
+			maIB.append(acc.getMarginAvailable(), last);
+			final double pv = acc.getPositionValue();
+			posValue += pv;
+			pvIB.append(pv, false);
+			final int tr = acc.getTrades().size();
+			trades += tr;
+			tIB.append(tr, false);
+			final int o = acc.getOrders().size();
+			orders += o;
+			oIB.append(o, false);
 		}
 		balanceIB.append(balance, true);
 		LoggingUtils.logInfo(balanceIB.toString());
 		uplIB.append(uPotLoss, true);
 		LoggingUtils.logInfo(uplIB.toString());
-
+		navIB.append(nav, true);
+		LoggingUtils.logInfo(navIB.toString());
+		LoggingUtils.logInfo(muIB.toString());
+		LoggingUtils.logInfo(maIB.toString());
+		pvIB.append(posValue, true);
+		LoggingUtils.logInfo(pvIB.toString());
+		tIB.append(trades, true);
+		LoggingUtils.logInfo(tIB.toString());
+		oIB.append(orders, true);
+		LoggingUtils.logInfo(oIB.toString());
 		final InfoBuilder rbIB = new InfoBuilder("Next Balance Reset");
 		rbIB.append(lastBalance, true);
 		LoggingUtils.logInfo(rbIB.toString());
