@@ -112,7 +112,7 @@ public class Trader implements Runnable, Observer {
 	protected void handleSL() {
 		for (final Account acc : accounts) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
-				new StopLossHandler(pair, rateTable).getSLOrder();
+				new StopLossHandler(pair, rateTable,acc).handleSL();
 			}
 		}
 	}

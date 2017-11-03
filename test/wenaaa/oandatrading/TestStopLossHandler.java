@@ -15,7 +15,9 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.oanda.fxtrade.api.Account;
 import com.oanda.fxtrade.api.CandlePoint;
+import com.oanda.fxtrade.api.MarketOrder;
 import com.oanda.fxtrade.api.OAException;
 import com.oanda.fxtrade.api.StopLossOrder;
 
@@ -24,27 +26,19 @@ public class TestStopLossHandler {
 	private static final double slspace = 0.27;
 
 	@Test
-	public void testGetSlOrderReturn() throws OAException {
+	public void testHandleSL() throws OAException {
 		final StopLossHandler slhandler = mock(StopLossHandler.class);
-		final StopLossOrder order = mock(StopLossOrder.class);
-		when(order.getPrice()).thenReturn(0.0).thenReturn(1.0);
 		final OAException t = new OAException();
-		when(slhandler.getSLOrderInternal()).thenReturn(order).thenThrow(t).thenReturn(order);
-		doCallRealMethod().when(slhandler).getSLOrder();
-		assertNull(slhandler.getSLOrder());
-		verify(slhandler, never()).isAcceptable(any(StopLossOrder.class));
+		when(slhandler.getPrice()).thenReturn(0.0).thenThrow(t).thenReturn(1.0);
+		doCallRealMethod().when(slhandler).handleSL();
+		slhandler.handleSL();
+		verify(slhandler, never()).applySL(any(Double.class));
 		verify(slhandler, never()).log(any(OAException.class));
-		verify(order, times(1)).getPrice();
-		assertNull(slhandler.getSLOrder());
+		slhandler.handleSL();
 		verify(slhandler, times(1)).log(t);
-		verify(order, times(1)).getPrice();
-		when(slhandler.isAcceptable(order)).thenReturn(false).thenReturn(true);
-		assertNull(slhandler.getSLOrder());
+		verify(slhandler,never()).applySL(any(Double.class));
+		slhandler.handleSL();
 		verify(slhandler, times(1)).log(t);
-		verify(order, times(2)).getPrice();
-		assertEquals(order, slhandler.getSLOrder());
-		verify(slhandler, times(1)).log(t);
-		verify(order, times(3)).getPrice();
 	}
 
 	@Test
@@ -104,4 +98,27 @@ public class TestStopLossHandler {
 		return answ;
 	}
 
+	
+	@Test
+	public void testApplySL() throws OAException{
+		final StopLossHandler slHandler = mock(StopLossHandler.class);
+		when(slHandler.getOpenTrades()).thenReturn(gOT());
+		Account acc = mock(Account.class);
+		when(slHandler.getAcc()).thenReturn(acc);
+		doCallRealMethod().when(slHandler).applySL(any(Double.class));
+		when(slHandler.isAcceptable(any(Double.class), any(MarketOrder.class))).thenReturn(true).thenReturn(false).thenReturn(true).thenReturn(false).thenReturn(true);
+		slHandler.applySL(0);
+		verify(acc,times(3)).modify(any(MarketOrder.class));
+		verify(slHandler,times(1)).getSLOrder(0);
+	}
+
+	private List<MarketOrder> gOT() {
+		List<MarketOrder> answ = new ArrayList<>();
+		answ.add(mock(MarketOrder.class));
+		answ.add(mock(MarketOrder.class));
+		answ.add(mock(MarketOrder.class));
+		answ.add(mock(MarketOrder.class));
+		answ.add(mock(MarketOrder.class));
+		return answ;
+	}
 }

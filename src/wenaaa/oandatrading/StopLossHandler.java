@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oanda.fxtrade.api.API;
+import com.oanda.fxtrade.api.Account;
 import com.oanda.fxtrade.api.CandlePoint;
 import com.oanda.fxtrade.api.FXPair;
 import com.oanda.fxtrade.api.Instrument;
+import com.oanda.fxtrade.api.MarketOrder;
 import com.oanda.fxtrade.api.OAException;
 import com.oanda.fxtrade.api.RateTable;
 import com.oanda.fxtrade.api.StopLossOrder;
@@ -22,28 +24,57 @@ public class StopLossHandler {
 	private final boolean buyPair;
 	private final SLHandlingProperties slHandling;
 	private final RateTable rateTable;
+	private Account account;
 
-	public StopLossHandler(final TradedPair pair, final RateTable rateTable) {
+	public StopLossHandler(final TradedPair pair, final RateTable rateTable, Account acc) {
 		this.pair = pair.getName();
 		this.buyPair = pair.isBuyPair();
 		slHandling = PropertyManager.getSLHandlingProperties();
 		this.rateTable = rateTable;
+		account = acc;
 	}
 
-	public StopLossOrder getSLOrder() {
-		StopLossOrder sl;
+	public void handleSL() {
+		double price;
 		try {
-			sl = getSLOrderInternal();
+			price = getPrice();
+			if (price == 0) {
+				return;
+			}
 		} catch (final OAException e) {
 			log(e);
-			return null;
+			return;
 		}
-		if (sl.getPrice() == 0) {
-			return null;
+		applySL(price);
+		return;
+	}
+
+	void applySL(double price) {
+		List<? extends MarketOrder> ot = getOpenTrades();
+		StopLossOrder slOrder = getSLOrder(price);
+		for(MarketOrder trade : ot){
+			if(isAcceptable(price,trade)){
+				try
+                {
+					LoggingUtils.logInfo("SSL > " + trade);
+					trade.setStopLoss(slOrder);
+                    getAcc().modify(trade);
+                    LoggingUtils.logInfo("OK");
+                }
+                catch (final OAException e)
+                {
+                    LoggingUtils.logInfo("Can't set SL > "+e.getMessage());
+                }
+			}
 		}
-		if (isAcceptable(sl)) {
-			return sl;
-		}
+		
+	}
+
+	Account getAcc() {
+		return account;
+	}
+
+	List<MarketOrder> getOpenTrades() {
 		return null;
 	}
 
@@ -52,12 +83,11 @@ public class StopLossHandler {
 		LoggingUtils.logException(e);
 	}
 
-	boolean isAcceptable(final StopLossOrder slorder) {
+	boolean isAcceptable(double price, MarketOrder trade) {
 		return false;
 	}
 
-	StopLossOrder getSLOrderInternal() throws OAException {
-		final double price = getPrice();
+	StopLossOrder getSLOrder(double price) {
 		return API.createStopLossOrder(price);
 	}
 
