@@ -33,7 +33,6 @@ import wenaaa.loginutils.LoggingUtils;
 import wenaaa.loginutils.LoginData;
 import wenaaa.oandatrading.logging.InfoBuilder;
 import wenaaa.oandatrading.properties.PropertyManager;
-import wenaaa.oandatrading.properties.SLHandlingProperties;
 import wenaaa.oandatrading.properties.TradedPair;
 
 public class Trader implements Runnable, Observer {
@@ -46,7 +45,6 @@ public class Trader implements Runnable, Observer {
 	private User user;
 	private RateTable rateTable;
 	private final Collection<Account> accounts;
-	private final SLHandlingProperties slHandling;
 	private final Map<Account, Collection<TradedPair>> tradedPairs;
 	private double lastBalance;
 
@@ -54,7 +52,6 @@ public class Trader implements Runnable, Observer {
 		this.tradeLock = tradeLock;
 		this.loginData = ld;
 		accounts = new ArrayList<>();
-		slHandling = PropertyManager.getSLHandlingProperties();
 		tradedPairs = new HashMap<>();
 		loadLastBalance();
 	}
@@ -105,9 +102,18 @@ public class Trader implements Runnable, Observer {
 	protected void trade() throws AccountException {
 		try {
 			printInfo();
+			handleSL();
 			Thread.sleep(1000);
 		} catch (final InterruptedException e) {
 
+		}
+	}
+
+	protected void handleSL() {
+		for (final Account acc : accounts) {
+			for (final TradedPair pair : tradedPairs.get(acc)) {
+				new StopLossHandler(pair, rateTable).getSLOrder();
+			}
 		}
 	}
 

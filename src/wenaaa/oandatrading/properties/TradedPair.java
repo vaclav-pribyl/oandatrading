@@ -1,13 +1,21 @@
 package wenaaa.oandatrading.properties;
 
+import java.security.InvalidParameterException;
+
 public class TradedPair {
 
+	static final String SHORT = "short";
+	static final String LONG = "long";
 	private final String name;
 	private final String position;
 
 	public TradedPair(final String name, final String position) {
 		this.name = name;
-		this.position = position;
+		if (SHORT.equalsIgnoreCase(position) || LONG.equalsIgnoreCase(position)) {
+			this.position = position;
+		} else {
+			throw new InvalidParameterException("Invalid position parameter.");
+		}
 	}
 
 	public String getName() {
@@ -16,6 +24,10 @@ public class TradedPair {
 
 	public String getPosition() {
 		return position;
+	}
+
+	public boolean isBuyPair() {
+		return LONG.equalsIgnoreCase(position);
 	}
 
 	@Override

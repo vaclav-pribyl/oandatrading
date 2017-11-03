@@ -33,9 +33,12 @@ public class TradingApp {
 			startStopCondition();
 
 			trade(ld);
+		} catch (final Exception e) {
+			LoggingUtils.logException(e);
 		} finally {
 			cleanUp();
 		}
+
 	}
 
 	public static void stop() {

@@ -34,9 +34,12 @@ public class TestSettingsParsing {
 	public void parseTradedPairs() {
 		final Collection<TradedPair> tp = PropertyManager.getTradedPairs(13);
 		assertEquals(3, tp.size());
-		assertTrue(tp.contains(new TradedPair("AUD/USD", "")));
-		assertTrue(tp.contains(new TradedPair("AUD/CAD", "")));
-		assertTrue(tp.contains(new TradedPair("USD/CAD", "")));
+		assertTrue(tp.contains(new TradedPair("AUD/USD", "short")));
+		assertTrue(tp.contains(new TradedPair("AUD/CAD", "short")));
+		assertTrue(tp.contains(new TradedPair("USD/CAD", "short")));
+		assertTrue(tp.contains(new TradedPair("AUD/USD", "long")));
+		assertTrue(tp.contains(new TradedPair("AUD/CAD", "long")));
+		assertTrue(tp.contains(new TradedPair("USD/CAD", "long")));
 	}
 
 	@Test

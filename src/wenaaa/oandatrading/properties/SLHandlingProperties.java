@@ -1,5 +1,7 @@
 package wenaaa.oandatrading.properties;
 
+import com.oanda.fxtrade.api.FXClient;
+
 public class SLHandlingProperties {
 
 	private final int candles;
@@ -24,4 +26,21 @@ public class SLHandlingProperties {
 		return timeFrame;
 	}
 
+	public long getTimeFrameValue() {
+		final long koef = getKoef();
+		return koef * Integer.parseInt(timeFrame.substring(1));
+	}
+
+	private long getKoef() {
+		if (timeFrame.startsWith("M")) {
+			return FXClient.INTERVAL_1_MIN;
+		}
+		if (timeFrame.startsWith("H")) {
+			return FXClient.INTERVAL_1_HOUR;
+		}
+		if (timeFrame.startsWith("D")) {
+			return FXClient.INTERVAL_1_DAY;
+		}
+		return -1;
+	}
 }
