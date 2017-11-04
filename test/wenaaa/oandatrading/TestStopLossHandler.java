@@ -1,7 +1,9 @@
 package wenaaa.oandatrading;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -120,5 +122,39 @@ public class TestStopLossHandler {
 		answ.add(mock(MarketOrder.class));
 		answ.add(mock(MarketOrder.class));
 		return answ;
+	}
+	
+	@Test
+	public void testIsAcceptableBuy(){
+		final StopLossHandler slHandler = mock(StopLossHandler.class);
+		when(slHandler.isAcceptable(any(Double.class), any(MarketOrder.class))).thenCallRealMethod();
+		when(slHandler.isBuyPair()).thenReturn(true);
+		final StopLossOrder slorder = mock(StopLossOrder.class);
+		when(slorder.getPrice()).thenReturn(3.0).thenReturn(1.0);
+		MarketOrder trade = mock(MarketOrder.class);
+		when(trade.getPrice()).thenReturn(1.0).thenReturn(3.0);
+		when(trade.getStopLoss()).thenReturn(slorder);
+		assertFalse(slHandler.isAcceptable(2, trade));
+		assertFalse(slHandler.isAcceptable(2, trade));
+		assertFalse(slHandler.isAcceptable(0.5, trade));
+		assertTrue(slHandler.isAcceptable(3.5, trade));
+	}
+	
+	@Test
+	public void testIsAcceptableSell(){
+		final StopLossHandler slHandler = mock(StopLossHandler.class);
+		when(slHandler.isAcceptable(any(Double.class), any(MarketOrder.class))).thenCallRealMethod();
+		when(slHandler.isBuyPair()).thenReturn(false);
+		final StopLossOrder slorder = mock(StopLossOrder.class);
+		when(slorder.getPrice()).thenReturn(4.0).thenReturn(2.0);
+		MarketOrder trade = mock(MarketOrder.class);
+		when(trade.getPrice()).thenReturn(2.0).thenReturn(4.0);
+		when(trade.getStopLoss()).thenReturn(slorder);
+		assertFalse(slHandler.isAcceptable(3, trade));
+		assertFalse(slHandler.isAcceptable(3, trade));
+		assertFalse(slHandler.isAcceptable(5, trade));
+		assertTrue(slHandler.isAcceptable(1, trade));
+		when(slorder.getPrice()).thenReturn(0.0);
+		assertTrue(slHandler.isAcceptable(3, trade));
 	}
 }

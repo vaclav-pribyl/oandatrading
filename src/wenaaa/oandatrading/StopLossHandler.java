@@ -2,9 +2,13 @@ package wenaaa.oandatrading;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.oanda.fxtrade.api.API;
 import com.oanda.fxtrade.api.Account;
+import com.oanda.fxtrade.api.AccountException;
 import com.oanda.fxtrade.api.CandlePoint;
 import com.oanda.fxtrade.api.FXPair;
 import com.oanda.fxtrade.api.Instrument;
@@ -75,7 +79,24 @@ public class StopLossHandler {
 	}
 
 	List<MarketOrder> getOpenTrades() {
-		return null;
+		Vector trades;
+		try {
+			trades = getAcc().getTrades();
+		} catch (AccountException e) {
+			LoggingUtils.logException(e);
+			LoggingUtils.logInfo("Can't get trade list: "+e.getMessage());
+			return null;
+		}
+		List<MarketOrder> list = (List<MarketOrder>) trades.stream().filter(new Predicate<MarketOrder>()
+        {
+
+            @Override
+            public boolean test(final MarketOrder t)
+            {
+                return t.getPair().getPair().equals(pair);
+            }
+        }).collect(Collectors.toList());
+		return list;
 	}
 
 	void log(final OAException e) {
@@ -84,7 +105,15 @@ public class StopLossHandler {
 	}
 
 	boolean isAcceptable(double price, MarketOrder trade) {
-		return false;
+		if (isBuyPair())
+        {
+            return price > trade.getPrice() && price > trade.getStopLoss().getPrice();
+        }
+        if (trade.getStopLoss().getPrice() != 0)
+        {
+            return price < trade.getPrice() && price < trade.getStopLoss().getPrice();
+        }
+        return price < trade.getPrice();
 	}
 
 	StopLossOrder getSLOrder(double price) {
