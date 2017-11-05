@@ -103,9 +103,18 @@ public class Trader implements Runnable, Observer {
 		try {
 			printInfo();
 			handleSL();
+			postOrders();
 			Thread.sleep(1000);
 		} catch (final InterruptedException e) {
 
+		}
+	}
+
+	protected void postOrders() {
+		for (final Account acc : accounts) {
+			for (final TradedPair pair : tradedPairs.get(acc)) {
+				new OrdersPoster(pair, rateTable, acc).trade();
+			}
 		}
 	}
 

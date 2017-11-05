@@ -62,4 +62,9 @@ public class PropertyManager {
 			}
 		}
 	}
+
+	public static double getDistanceKoef() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
