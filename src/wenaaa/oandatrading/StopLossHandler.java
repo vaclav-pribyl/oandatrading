@@ -93,12 +93,16 @@ public class StopLossHandler {
             @Override
             public boolean test(final MarketOrder t)
             {
-                return t.getPair().getPair().equals(pair);
+                return t.getPair().getPair().equals(getPair());
             }
         }).collect(Collectors.toList());
 		return list;
 	}
 
+	String getPair(){
+		return pair;
+	}
+	
 	void log(final OAException e) {
 		LoggingUtils.logInfo("Can not set SL: " + e.getMessage());
 		LoggingUtils.logException(e);

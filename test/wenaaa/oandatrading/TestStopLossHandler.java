@@ -2,7 +2,6 @@ package wenaaa.oandatrading;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -14,17 +13,21 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import org.junit.Test;
 
 import com.oanda.fxtrade.api.Account;
+import com.oanda.fxtrade.api.AccountException;
 import com.oanda.fxtrade.api.CandlePoint;
+import com.oanda.fxtrade.api.FXPair;
 import com.oanda.fxtrade.api.MarketOrder;
 import com.oanda.fxtrade.api.OAException;
 import com.oanda.fxtrade.api.StopLossOrder;
 
 public class TestStopLossHandler {
 
+	
 	private static final double slspace = 0.27;
 
 	@Test
@@ -156,5 +159,58 @@ public class TestStopLossHandler {
 		assertTrue(slHandler.isAcceptable(1, trade));
 		when(slorder.getPrice()).thenReturn(0.0);
 		assertTrue(slHandler.isAcceptable(3, trade));
+	}
+	
+	@Test
+	public void testGetOpenTrades() throws AccountException{
+		final StopLossHandler slHandler = mock(StopLossHandler.class);
+		when(slHandler.getOpenTrades()).thenCallRealMethod();
+		Account acc = getAcc();
+		when(slHandler.getAcc()).thenReturn(acc);
+		when(slHandler.getPair()).thenReturn("AUD/USD");
+		List<MarketOrder> aul = slHandler.getOpenTrades();
+		checkOpenTrades(3,"AUD/USD",aul);
+		when(slHandler.getPair()).thenReturn("EUR/USD");
+		List<MarketOrder> eul = slHandler.getOpenTrades();
+		checkOpenTrades(2,"EUR/USD",eul);
+		when(slHandler.getPair()).thenReturn("GBP/USD");
+		List<MarketOrder> gul = slHandler.getOpenTrades();
+		checkOpenTrades(1,"GBP/USD",gul);
+		when(slHandler.getPair()).thenReturn("USD/CHF");
+		List<MarketOrder> ucl = slHandler.getOpenTrades();
+		checkOpenTrades(0,"USD/CHF",ucl);
+	}
+
+	void checkOpenTrades(int size, String pair, List<MarketOrder> l) {
+		assertEquals(size, l.size());
+		for(MarketOrder t:l){
+			assertEquals(pair, t.getPair().getPair());
+		}
+	}
+
+	private Account getAcc() throws AccountException {
+		Account acc = mock(Account.class);
+		Vector trades = getTrades();
+		when(acc.getTrades()).thenReturn(trades);
+		return acc ;
+	}
+
+	private Vector getTrades() {
+		Vector vec = new Vector<>();
+		vec.add(getMO("AUD/USD"));
+		vec.add(getMO("EUR/USD"));
+		vec.add(getMO("AUD/USD"));
+		vec.add(getMO("AUD/USD"));
+		vec.add(getMO("EUR/USD"));
+		vec.add(getMO("GBP/USD"));
+		return vec;
+	}
+
+	private Object getMO(String pair) {
+		MarketOrder mo = mock(MarketOrder.class);
+		FXPair fxpair = mock(FXPair.class);
+		when(mo.getPair()).thenReturn(fxpair);
+		when(fxpair.getPair()).thenReturn(pair);
+		return mo;
 	}
 }
