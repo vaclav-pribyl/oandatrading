@@ -104,10 +104,19 @@ public class Trader implements Runnable, Observer {
 			printInfo();
 			handleSL();
 			postOrders();
+			lastBalanceReset();
 			Thread.sleep(1000);
 		} catch (final InterruptedException e) {
 
 		}
+	}
+
+	protected void lastBalanceReset() {
+		double balance = 0.0;
+		for (final Account acc : accounts) {
+			balance += acc.getBalance();
+		}
+
 	}
 
 	protected void postOrders() {
@@ -121,7 +130,7 @@ public class Trader implements Runnable, Observer {
 	protected void handleSL() {
 		for (final Account acc : accounts) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
-				new StopLossHandler(pair, rateTable,acc).handleSL();
+				new StopLossHandler(pair, rateTable, acc).handleSL();
 			}
 		}
 	}
