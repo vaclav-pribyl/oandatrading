@@ -28,6 +28,8 @@ public class PropertiesHandler extends DefaultHandler {
 	private boolean inCandles;
 	private boolean inAdded;
 	private boolean inTF;
+	private boolean inDC;
+	private boolean inRBR;
 
 	PropertiesHandler(final File pf) {
 		propertiesFile = pf;
@@ -63,6 +65,10 @@ public class PropertiesHandler extends DefaultHandler {
 			inAdded = true;
 		} else if (qName.equals("timeframe")) {
 			inTF = true;
+		} else if (qName.equals("distancecoef")) {
+			inDC = true;
+		} else if (qName.equals("balanceresetratio")) {
+			inRBR = true;
 		}
 	}
 
@@ -77,6 +83,10 @@ public class PropertiesHandler extends DefaultHandler {
 			addedSpace = Float.parseFloat(getCharString(ch, start, length));
 		} else if (inTF) {
 			timeFrame = getCharString(ch, start, length);
+		} else if (inDC) {
+			PropertyManager.setDistanceKoef(Double.parseDouble(getCharString(ch, start, length)));
+		} else if (inRBR) {
+			PropertyManager.setResetBalanceRatio(Double.parseDouble(getCharString(ch, start, length)));
 		}
 	}
 
@@ -99,6 +109,10 @@ public class PropertiesHandler extends DefaultHandler {
 			inAdded = false;
 		} else if (qName.equals("timeframe")) {
 			inTF = false;
+		} else if (qName.equals("distancecoef")) {
+			inDC = false;
+		} else if (qName.equals("balanceresetratio")) {
+			inRBR = false;
 		}
 	}
 }

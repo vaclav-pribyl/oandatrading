@@ -65,4 +65,14 @@ public class TestSettingsParsing {
 		assertEquals(1.1, slSettings.getAddedSpaceCoef(), 1e-6);
 		assertEquals("M5", slSettings.getTimeFrame());
 	}
+
+	@Test
+	public void parseDistanceCoef() {
+		assertEquals(12, PropertyManager.getDistanceKoef(), 1e-9);
+	}
+
+	@Test
+	public void parseResetBalanceRatio() {
+		assertEquals(4.3, PropertyManager.getResetBalanceRatio(), 1e-9);
+	}
 }

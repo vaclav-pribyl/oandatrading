@@ -12,6 +12,8 @@ public class PropertyManager {
 	private static final File pf = new File("settings.xml");
 	private static final Set<AccountProperties> accounts = new HashSet<>();
 	private static SLHandlingProperties slProperties;
+	private static double distancekoef;
+	private static double resetBalanceRatio;
 
 	private PropertyManager() {
 
@@ -64,7 +66,18 @@ public class PropertyManager {
 	}
 
 	public static double getDistanceKoef() {
-		// TODO Auto-generated method stub
-		return 0;
+		return distancekoef;
+	}
+
+	static void setDistanceKoef(final double dk) {
+		distancekoef = dk;
+	}
+
+	public static double getResetBalanceRatio() {
+		return resetBalanceRatio;
+	}
+
+	static void setResetBalanceRatio(final double rbr) {
+		resetBalanceRatio = rbr;
 	}
 }

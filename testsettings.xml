@@ -14,4 +14,6 @@
 		<addedspace>1.1</addedspace>
 		<timeframe>M5</timeframe>
 	</stoplosshandling>
+	<distancecoef>12</distancecoef>
+	<balanceresetratio>4.3</balanceresetratio>
 </properties>

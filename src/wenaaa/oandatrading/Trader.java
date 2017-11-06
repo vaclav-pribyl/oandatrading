@@ -47,6 +47,8 @@ public class Trader implements Runnable, Observer {
 	private final Collection<Account> accounts;
 	private final Map<Account, Collection<TradedPair>> tradedPairs;
 	private double lastBalance;
+	private int infoCounter;
+	private long reportTime;
 
 	public Trader(final LoginData ld, final ReentrantLock tradeLock) {
 		this.tradeLock = tradeLock;
@@ -101,22 +103,51 @@ public class Trader implements Runnable, Observer {
 
 	protected void trade() throws AccountException {
 		try {
-			printInfo();
-			handleSL();
-			postOrders();
-			lastBalanceReset();
-			Thread.sleep(1000);
+			if (infoCounter == 60) {
+				printInfo();
+				lastBalanceReset();
+				infoCounter = 0;
+				if (System.currentTimeMillis() > getReportTime()) {
+					report();
+					resetReportTime();
+				}
+			} else {
+				handleSL();
+				postOrders();
+				infoCounter++;
+			}
+			sleep(1000);
 		} catch (final InterruptedException e) {
 
 		}
 	}
 
-	protected void lastBalanceReset() {
+	void sleep(final long time) throws InterruptedException {
+		Thread.sleep(time);
+	}
+
+	long getReportTime() {
+		return reportTime;
+	}
+
+	void resetReportTime() {
+		// TODO Auto-generated method stub
+
+	}
+
+	protected void report() {
+		// TODO Auto-generated method stub
+
+	}
+
+	protected void lastBalanceReset() throws AccountException {
 		double balance = 0.0;
 		for (final Account acc : accounts) {
 			balance += acc.getBalance();
 		}
-
+		if (balance / lastBalance > PropertyManager.getResetBalanceRatio()) {
+			storeLastBalance(balance);
+		}
 	}
 
 	protected void postOrders() {
@@ -238,6 +269,10 @@ public class Trader implements Runnable, Observer {
 		for (final Account acc : accounts) {
 			balance += acc.getBalance();
 		}
+		storeLastBalance(balance);
+	}
+
+	void storeLastBalance(final double balance) {
 		lastBalance = balance;
 		final File balaceFile = new File(LAST_BALANCE_PATH);
 		try (FileWriter fw = new FileWriter(balaceFile);
