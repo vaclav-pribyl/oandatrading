@@ -7,6 +7,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -49,7 +52,7 @@ public class Trader implements Runnable, Observer {
 	private final Map<Account, Collection<TradedPair>> tradedPairs;
 	private double lastBalance;
 	private int infoCounter;
-	private long reportTime;
+	private LocalDateTime reportTime;
 
 	public Trader(final LoginData ld, final ReentrantLock tradeLock) {
 		this.tradeLock = tradeLock;
@@ -57,6 +60,35 @@ public class Trader implements Runnable, Observer {
 		accounts = new ArrayList<>();
 		tradedPairs = new HashMap<>();
 		loadLastBalance();
+		setReportTime();
+	}
+
+	protected void setReportTime() {
+		final File reportFile = new File(REPORT_PATH);
+		try {
+			final BufferedReader br = new BufferedReader(new FileReader(reportFile));
+			initReportTime(br);
+			br.close();
+		} catch (final IOException e) {
+			logAndThrowRuntime(e, "Can't read " + REPORT_PATH + " file.");
+		}
+	}
+
+	void initReportTime(final BufferedReader br) throws IOException {
+		boolean todayReported = false;
+		String line;
+		final String date = LocalDate.now().toString();
+		while ((line = br.readLine()) != null) {
+			if (line.startsWith(date)) {
+				todayReported = true;
+				break;
+			}
+		}
+		if (todayReported) {
+			resetReportTime();
+		} else {
+			reportTime = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS).withHour(9);
+		}
 	}
 
 	protected void loadLastBalance() {
@@ -68,7 +100,7 @@ public class Trader implements Runnable, Observer {
 		} catch (final NumberFormatException e) {
 			logAndThrowRuntime(e, "Wrong number format in lastBalance file.");
 		} catch (final IOException e) {
-			logAndThrowRuntime(e, "Can't read lastBalance file.");
+			logAndThrowRuntime(e, "Can't read " + LAST_BALANCE_PATH + " file.");
 		}
 	}
 
@@ -108,7 +140,7 @@ public class Trader implements Runnable, Observer {
 				printInfo();
 				lastBalanceReset();
 				infoCounter = 0;
-				if (System.currentTimeMillis() > getReportTime()) {
+				if (LocalDateTime.now().isAfter(getReportTime())) {
 					report();
 					resetReportTime();
 				}
@@ -127,16 +159,15 @@ public class Trader implements Runnable, Observer {
 		Thread.sleep(time);
 	}
 
-	long getReportTime() {
+	LocalDateTime getReportTime() {
 		return reportTime;
 	}
 
 	void resetReportTime() {
-		// TODO Auto-generated method stub
-
+		reportTime = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.DAYS).withHour(9);
 	}
 
-	protected void report() {
+	protected void report() throws AccountException {
 		final File reportFile = new File(REPORT_PATH);
 		try (FileWriter fw = new FileWriter(reportFile, true);
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -146,11 +177,40 @@ public class Trader implements Runnable, Observer {
 			LoggingUtils.logException(ex);
 			LoggingUtils.logInfo("Can't write report to file (" + REPORT_PATH + "): " + ex.getMessage());
 		}
-
 	}
 
-	void reportResults(final PrintWriter pw) {
+	void reportResults(final PrintWriter pw) throws AccountException {
+		final LocalDate date = LocalDate.now();
+		final StringBuilder sb = new StringBuilder(date.toString() + " ");
+		sb.append(getTotalBalance() + " ");
+		sb.append((getTotalBalance() + getTotalUPL()) + " ");
+		sb.append(getTotalTrades() + " ");
+		sb.append(getTotalOrders());
+		pw.println(sb.toString());
+	}
 
+	int getTotalOrders() throws AccountException {
+		int orders = 0;
+		for (final Account acc : getAccounts()) {
+			orders += acc.getOrders().size();
+		}
+		return orders;
+	}
+
+	double getTotalUPL() throws AccountException {
+		double upl = 0.0;
+		for (final Account acc : getAccounts()) {
+			upl += acc.getUnrealizedPL();
+		}
+		return upl;
+	}
+
+	int getTotalTrades() throws AccountException {
+		int trades = 0;
+		for (final Account acc : getAccounts()) {
+			trades += acc.getTrades().size();
+		}
+		return trades;
 	}
 
 	protected void lastBalanceReset() throws AccountException {
