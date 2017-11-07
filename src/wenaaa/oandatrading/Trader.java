@@ -38,6 +38,7 @@ import wenaaa.oandatrading.properties.TradedPair;
 public class Trader implements Runnable, Observer {
 
 	private static final String LAST_BALANCE_PATH = "lastBalance";
+	private static final String REPORT_PATH = "results";
 	private final ReentrantLock tradeLock;
 	private boolean stop = false;
 	private FXClient fxClient;
@@ -136,22 +137,52 @@ public class Trader implements Runnable, Observer {
 	}
 
 	protected void report() {
-		// TODO Auto-generated method stub
+		final File reportFile = new File(REPORT_PATH);
+		try (FileWriter fw = new FileWriter(reportFile, true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter pw = new PrintWriter(bw)) {
+			reportResults(pw);
+		} catch (final IOException ex) {
+			LoggingUtils.logException(ex);
+			LoggingUtils.logInfo("Can't write report to file (" + REPORT_PATH + "): " + ex.getMessage());
+		}
+
+	}
+
+	void reportResults(final PrintWriter pw) {
 
 	}
 
 	protected void lastBalanceReset() throws AccountException {
-		double balance = 0.0;
-		for (final Account acc : accounts) {
-			balance += acc.getBalance();
-		}
-		if (balance / lastBalance > PropertyManager.getResetBalanceRatio()) {
-			storeLastBalance(balance);
+		final double balance = getTotalBalance();
+		if (balance / getLastBalance() > PropertyManager.getResetBalanceRatio()) {
+			closeTrades();
+			updateLastBalance();
 		}
 	}
 
+	double getLastBalance() {
+		return lastBalance;
+	}
+
+	void closeTrades() {
+		new TradesCloser().closeTrades();
+	}
+
+	double getTotalBalance() throws AccountException {
+		double balance = 0.0;
+		for (final Account acc : getAccounts()) {
+			balance += acc.getBalance();
+		}
+		return balance;
+	}
+
+	Collection<Account> getAccounts() {
+		return accounts;
+	}
+
 	protected void postOrders() {
-		for (final Account acc : accounts) {
+		for (final Account acc : getAccounts()) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
 				new OrdersPoster(pair, rateTable, acc).trade();
 			}
@@ -159,7 +190,7 @@ public class Trader implements Runnable, Observer {
 	}
 
 	protected void handleSL() {
-		for (final Account acc : accounts) {
+		for (final Account acc : getAccounts()) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
 				new StopLossHandler(pair, rateTable, acc).handleSL();
 			}
@@ -184,7 +215,7 @@ public class Trader implements Runnable, Observer {
 		int trades = 0;
 		final InfoBuilder oIB = new InfoBuilder("Orders");
 		int orders = 0;
-		final Iterator<Account> iter = accounts.iterator();
+		final Iterator<Account> iter = getAccounts().iterator();
 		while (iter.hasNext()) {
 			final Account acc = iter.next();
 			final boolean last = !iter.hasNext();
@@ -223,7 +254,7 @@ public class Trader implements Runnable, Observer {
 		oIB.append(orders, true);
 		LoggingUtils.logInfo(oIB.toString());
 		final InfoBuilder rbIB = new InfoBuilder("Next Balance Reset");
-		rbIB.append(lastBalance, true);
+		rbIB.append(getLastBalance(), true);
 		LoggingUtils.logInfo(rbIB.toString());
 	}
 
@@ -248,7 +279,7 @@ public class Trader implements Runnable, Observer {
 			if (source == fxClient && status.equals(FXClient.CONNECTED)) {
 				setUser();
 				setAccounts();
-				if (lastBalance < 0) {
+				if (getLastBalance() < 0) {
 					updateLastBalance();
 				}
 				setRateTable();
@@ -264,27 +295,23 @@ public class Trader implements Runnable, Observer {
 		}
 	}
 
-	private void updateLastBalance() throws AccountException {
-		double balance = 0;
-		for (final Account acc : accounts) {
-			balance += acc.getBalance();
-		}
-		storeLastBalance(balance);
+	void updateLastBalance() throws AccountException {
+		lastBalance = getTotalBalance();
+		storeLastBalance();
 	}
 
-	void storeLastBalance(final double balance) {
-		lastBalance = balance;
+	void storeLastBalance() {
 		final File balaceFile = new File(LAST_BALANCE_PATH);
 		try (FileWriter fw = new FileWriter(balaceFile);
 				BufferedWriter bw = new BufferedWriter(fw);
 				PrintWriter pw = new PrintWriter(bw)) {
-			pw.println(lastBalance);
+			pw.println(getLastBalance());
 		} catch (final IOException e) {
 			LoggingUtils.logException(e);
-			LoggingUtils.logInfo("Can't write lastBalance file (" + lastBalance + ")");
+			LoggingUtils.logInfo("Can't write lastBalance file (" + getLastBalance() + "): " + e.getMessage());
 		}
 		final InfoBuilder ib = new InfoBuilder("Last balance set");
-		ib.append(lastBalance, true);
+		ib.append(getLastBalance(), true);
 		LoggingUtils.logInfo(ib.toString());
 	}
 
@@ -297,7 +324,7 @@ public class Trader implements Runnable, Observer {
 		LoggingUtils.logInfo("Setting account...");
 		for (final int acc_id : PropertyManager.getAccounts()) {
 			final Account acc = user.getAccountWithId(acc_id);
-			accounts.add(acc);
+			getAccounts().add(acc);
 			final InfoBuilder ib = new InfoBuilder("Using account");
 			ib.append(acc_id, true);
 			LoggingUtils.logInfo(ib.toString());

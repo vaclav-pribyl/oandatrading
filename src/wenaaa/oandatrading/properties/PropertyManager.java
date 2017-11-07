@@ -35,9 +35,9 @@ public class PropertyManager {
 		return answ;
 	}
 
-	public static Collection<TradedPair> getTradedPairs(final int account_id) {
+	public static Collection<TradedPair> getTradedPairs(final int accountId) {
 		for (final AccountProperties acc : accounts) {
-			if (account_id == acc.id) {
+			if (accountId == acc.id) {
 				return Collections.unmodifiableCollection(acc.pairs);
 			}
 		}
@@ -48,15 +48,15 @@ public class PropertyManager {
 		return slProperties;
 	}
 
-	static void setSLHandlingProperties(final SLHandlingProperties properties) {
+	public static void setSLHandlingProperties(final SLHandlingProperties properties) {
 		slProperties = properties;
 	}
 
-	static void addAccount(final int account_id) {
+	public static void addAccount(final int account_id) {
 		accounts.add(new AccountProperties(account_id));
 	}
 
-	static void addTradedPair(final int account_id, final String pair, final String position) {
+	public static void addTradedPair(final int account_id, final String pair, final String position) {
 		for (final AccountProperties acc : accounts) {
 			if (acc.id == account_id) {
 				acc.addPair(pair, position);
@@ -69,7 +69,7 @@ public class PropertyManager {
 		return distancekoef;
 	}
 
-	static void setDistanceKoef(final double dk) {
+	public static void setDistanceKoef(final double dk) {
 		distancekoef = dk;
 	}
 
@@ -77,7 +77,7 @@ public class PropertyManager {
 		return resetBalanceRatio;
 	}
 
-	static void setResetBalanceRatio(final double rbr) {
+	public static void setResetBalanceRatio(final double rbr) {
 		resetBalanceRatio = rbr;
 	}
 }
