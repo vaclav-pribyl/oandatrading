@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -146,7 +147,7 @@ public class TestOrdersPoster {
 		when(orderposter.getTradePrice()).thenReturn(1.123);
 		final Account acc = mock(Account.class);
 		when(orderposter.getAcc()).thenReturn(acc);
-		final long unixExpiry = System.currentTimeMillis() / 1000L + 7770000;
+		final long unixExpiry = ZonedDateTime.now().plusMonths(1).toEpochSecond();
 		orderposter.postNewTrade();
 		verify(lo).setPair(fxpair);
 		verify(lo).setUnits(-2L);

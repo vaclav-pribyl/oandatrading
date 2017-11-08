@@ -1,5 +1,6 @@
 package wenaaa.oandatrading;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class OrdersPoster {
 			limitOrder.setPair(getPair());
 			limitOrder.setUnits(getUnits());
 			limitOrder.setPrice(getTradePrice());
-			limitOrder.setExpiry(System.currentTimeMillis() / 1000L + 7770000);
+			limitOrder.setExpiry(ZonedDateTime.now().plusMonths(1).toEpochSecond());
 
 			LoggingUtils.logInfo("Submitting limit order..." + limitOrder);
 			getAcc().execute(limitOrder);
