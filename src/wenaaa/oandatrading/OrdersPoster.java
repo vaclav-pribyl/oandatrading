@@ -11,6 +11,7 @@ import com.oanda.fxtrade.api.FXPair;
 import com.oanda.fxtrade.api.LimitOrder;
 import com.oanda.fxtrade.api.Order;
 import com.oanda.fxtrade.api.RateTable;
+import com.oanda.fxtrade.api.RateTableException;
 
 import wenaaa.loginutils.LoggingUtils;
 import wenaaa.oandatrading.properties.PropertyManager;
@@ -101,8 +102,34 @@ public class OrdersPoster {
 		return answ;
 	}
 
-	long getUnits() {
-		return isBuyPair() ? 1 : -1;
+	long getUnits() throws RateTableException, AccountException {
+		final int buycoef = isBuyPair() ? 1 : -1;
+		final double ratecoef = getCoef(getUSDPair());
+		final double riskcoef = PropertyManager.getRiskCoef();
+		final double balance = getAcc().getBalance();
+		final double answ = balance * buycoef * ratecoef * riskcoef;
+		return (long) answ;
+	}
+
+	private double getCoef(final FXPair fxpair) throws RateTableException {
+		if (isUSDBased(fxpair)) {
+			return 1;
+		}
+		final double rate = rateTable.getRate(fxpair).getAsk();
+		return 1 / rate;
+	}
+
+	private FXPair getUSDPair() {
+		final FXPair fxpair = getPair();
+		if (isUSDBased(fxpair)) {
+			return fxpair;
+		}
+		fxpair.setQuote("USD");
+		return fxpair;
+	}
+
+	boolean isUSDBased(final FXPair fxpair) {
+		return "USD".equals(fxpair.getBase());
 	}
 
 	double getTradePrice() {

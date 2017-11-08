@@ -80,4 +80,9 @@ public class PropertyManager {
 	public static void setResetBalanceRatio(final double rbr) {
 		resetBalanceRatio = rbr;
 	}
+
+	public static double getRiskCoef() {
+		// TODO Auto-generated method stub
+		return 0.02;
+	}
 }
