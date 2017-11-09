@@ -72,11 +72,11 @@ public class OrdersPoster {
 	}
 
 	double getAsk() {
-		return rateTable.getInstrument(pair).getAsk();
+		return getRateTable().getInstrument(pair).getAsk();
 	}
 
 	double getBid() {
-		return rateTable.getInstrument(pair).getBid();
+		return getRateTable().getInstrument(pair).getBid();
 	}
 
 	boolean isConflictingTrade(final Order trade) {
@@ -104,22 +104,27 @@ public class OrdersPoster {
 
 	long getUnits() throws RateTableException, AccountException {
 		final int buycoef = isBuyPair() ? 1 : -1;
-		final double ratecoef = getCoef(getUSDPair());
+		final double ratecoef = getCoef();
 		final double riskcoef = PropertyManager.getRiskCoef();
 		final double balance = getAcc().getBalance();
 		final double answ = balance * buycoef * ratecoef * riskcoef;
 		return (long) answ;
 	}
 
-	private double getCoef(final FXPair fxpair) throws RateTableException {
+	double getCoef() throws RateTableException {
+		final FXPair fxpair = getUSDPair();
 		if (isUSDBased(fxpair)) {
 			return 1;
 		}
-		final double rate = rateTable.getRate(fxpair).getAsk();
+		final double rate = getRateTable().getRate(fxpair).getAsk();
 		return 1 / rate;
 	}
 
-	private FXPair getUSDPair() {
+	RateTable getRateTable() {
+		return rateTable;
+	}
+
+	FXPair getUSDPair() {
 		final FXPair fxpair = getPair();
 		if (isUSDBased(fxpair)) {
 			return fxpair;

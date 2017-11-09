@@ -30,6 +30,7 @@ public class PropertiesHandler extends DefaultHandler {
 	private boolean inTF;
 	private boolean inDC;
 	private boolean inRBR;
+	private boolean inRC;
 
 	PropertiesHandler(final File pf) {
 		propertiesFile = pf;
@@ -69,6 +70,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inDC = true;
 		} else if (qName.equals("balanceresetratio")) {
 			inRBR = true;
+		} else if (qName.equals("riskcoef")) {
+			inRC = true;
 		}
 	}
 
@@ -87,6 +90,8 @@ public class PropertiesHandler extends DefaultHandler {
 			PropertyManager.setDistanceKoef(Double.parseDouble(getCharString(ch, start, length)));
 		} else if (inRBR) {
 			PropertyManager.setResetBalanceRatio(Double.parseDouble(getCharString(ch, start, length)));
+		} else if (inRC) {
+			PropertyManager.setRiskCoef(Double.parseDouble(getCharString(ch, start, length)));
 		}
 	}
 
@@ -113,6 +118,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inDC = false;
 		} else if (qName.equals("balanceresetratio")) {
 			inRBR = false;
+		} else if (qName.equals("riskcoef")) {
+			inRC = false;
 		}
 	}
 }

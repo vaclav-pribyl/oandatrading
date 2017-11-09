@@ -16,4 +16,5 @@
 	</stoplosshandling>
 	<distancecoef>12</distancecoef>
 	<balanceresetratio>4.3</balanceresetratio>
+	<riskcoef>3.6</riskcoef>
 </properties>

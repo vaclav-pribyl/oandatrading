@@ -15,8 +15,13 @@ import wenaaa.loginutils.LoggingUtils;
 
 public class TradesCloser {
 
-	private Collection<Account> accounts;
-	private RateTable rateTable;
+	private final Collection<Account> accounts;
+	private final RateTable rateTable;
+
+	public TradesCloser(final Collection<Account> accounts, final RateTable rateTable) {
+		this.accounts = accounts;
+		this.rateTable = rateTable;
+	}
 
 	public void closeTrades() {
 		for (final Account acc : getAccounts()) {

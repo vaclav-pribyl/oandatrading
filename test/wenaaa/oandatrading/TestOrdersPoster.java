@@ -21,10 +21,15 @@ import org.junit.Test;
 import com.oanda.fxtrade.api.Account;
 import com.oanda.fxtrade.api.AccountException;
 import com.oanda.fxtrade.api.FXPair;
+import com.oanda.fxtrade.api.FXTick;
 import com.oanda.fxtrade.api.LimitOrder;
 import com.oanda.fxtrade.api.MarketOrder;
 import com.oanda.fxtrade.api.OAException;
 import com.oanda.fxtrade.api.Order;
+import com.oanda.fxtrade.api.RateTable;
+import com.oanda.fxtrade.api.RateTableException;
+
+import wenaaa.oandatrading.properties.PropertyManager;
 
 public class TestOrdersPoster {
 
@@ -154,5 +159,63 @@ public class TestOrdersPoster {
 		verify(lo).setPrice(1.123);
 		verify(lo).setExpiry(unixExpiry);
 		verify(acc).execute(lo);
+	}
+
+	@Test
+	public void testGetUnits() throws RateTableException, AccountException {
+		final OrdersPoster orderposter = mock(OrdersPoster.class);
+		when(orderposter.getUnits()).thenCallRealMethod();
+		when(orderposter.isBuyPair()).thenReturn(true).thenReturn(false);
+		when(orderposter.getCoef()).thenReturn(1.2).thenReturn(0.7);
+		PropertyManager.setRiskCoef(1.3);
+		final Account acc = mock(Account.class);
+		when(orderposter.getAcc()).thenReturn(acc);
+		when(acc.getBalance()).thenReturn(1234.5).thenReturn(876.5);
+		// 1 * 1.2 * 1.3 * 1234.5 = 1925.82
+		assertEquals(1925, orderposter.getUnits());
+		// -1 * 0.7 * 1.3 * 876.5 = -797.615
+		assertEquals(-797, orderposter.getUnits());
+	}
+
+	@Test
+	public void testGetCoef() throws RateTableException {
+		final OrdersPoster orderposter = mock(OrdersPoster.class);
+		when(orderposter.getCoef()).thenCallRealMethod();
+		final FXPair fxpair = mock(FXPair.class);
+		when(orderposter.getUSDPair()).thenReturn(fxpair);
+		when(orderposter.isUSDBased(fxpair)).thenReturn(true).thenReturn(false);
+		final RateTable rt = mock(RateTable.class);
+		when(orderposter.getRateTable()).thenReturn(rt);
+		final FXTick tick = mock(FXTick.class);
+		when(rt.getRate(fxpair)).thenReturn(tick);
+		when(tick.getAsk()).thenReturn(0.753);
+		assertEquals(1, orderposter.getCoef(), 1e-6);
+		verify(orderposter, never()).getRateTable();
+		assertEquals(1 / 0.753, orderposter.getCoef(), 1e-6);
+		verify(orderposter, times(1)).getRateTable();
+	}
+
+	@Test
+	public void testGetUSDPair() {
+		final OrdersPoster orderposter = mock(OrdersPoster.class);
+		when(orderposter.getUSDPair()).thenCallRealMethod();
+		final FXPair pair = mock(FXPair.class);
+		when(orderposter.getPair()).thenReturn(pair);
+		when(orderposter.isUSDBased(pair)).thenReturn(true).thenReturn(false);
+		orderposter.getUSDPair();
+		verify(pair, never()).setQuote(any(String.class));
+		orderposter.getUSDPair();
+		verify(pair, times(1)).setQuote("USD");
+	}
+
+	@Test
+	public void testIsUSDBased() {
+		final OrdersPoster orderposter = mock(OrdersPoster.class);
+		final FXPair pair = mock(FXPair.class);
+		when(orderposter.isUSDBased(pair)).thenCallRealMethod();
+		when(pair.getQuote()).thenReturn("CAD").thenReturn("USD");
+		when(pair.getBase()).thenReturn("USD").thenReturn("CAD");
+		assertTrue(orderposter.isUSDBased(pair));
+		assertFalse(orderposter.isUSDBased(pair));
 	}
 }

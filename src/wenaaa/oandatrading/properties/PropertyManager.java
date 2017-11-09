@@ -14,6 +14,7 @@ public class PropertyManager {
 	private static SLHandlingProperties slProperties;
 	private static double distancekoef;
 	private static double resetBalanceRatio;
+	private static double riskCoef;
 
 	private PropertyManager() {
 
@@ -82,7 +83,10 @@ public class PropertyManager {
 	}
 
 	public static double getRiskCoef() {
-		// TODO Auto-generated method stub
-		return 0.02;
+		return riskCoef;
+	}
+
+	public static void setRiskCoef(final double rc) {
+		riskCoef = rc;
 	}
 }

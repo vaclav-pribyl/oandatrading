@@ -214,11 +214,15 @@ public class Trader implements Runnable, Observer {
 	}
 
 	protected void lastBalanceReset() throws AccountException {
-		final double balance = getTotalBalance();
-		if (balance / getLastBalance() > PropertyManager.getResetBalanceRatio()) {
+		final double nav = getTotalBalance() + getTotalUPL();
+		if (nav > getBalanceReset()) {
 			closeTrades();
 			updateLastBalance();
 		}
+	}
+
+	double getBalanceReset() {
+		return getLastBalance() * PropertyManager.getResetBalanceRatio();
 	}
 
 	double getLastBalance() {
@@ -226,7 +230,7 @@ public class Trader implements Runnable, Observer {
 	}
 
 	void closeTrades() {
-		new TradesCloser().closeTrades();
+		new TradesCloser(accounts, rateTable).closeTrades();
 	}
 
 	double getTotalBalance() throws AccountException {
@@ -314,7 +318,7 @@ public class Trader implements Runnable, Observer {
 		oIB.append(orders, true);
 		LoggingUtils.logInfo(oIB.toString());
 		final InfoBuilder rbIB = new InfoBuilder("Next Balance Reset");
-		rbIB.append(getLastBalance(), true);
+		rbIB.append(getBalanceReset(), true);
 		LoggingUtils.logInfo(rbIB.toString());
 	}
 

@@ -75,4 +75,9 @@ public class TestSettingsParsing {
 	public void parseResetBalanceRatio() {
 		assertEquals(4.3, PropertyManager.getResetBalanceRatio(), 1e-9);
 	}
+
+	@Test
+	public void parseRiskCoef() {
+		assertEquals(3.6, PropertyManager.getRiskCoef(), 1e-9);
+	}
 }

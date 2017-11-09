@@ -55,7 +55,9 @@ public class TestTrader {
 		doCallRealMethod().when(trader).lastBalanceReset();
 		PropertyManager.setResetBalanceRatio(2);
 		when(trader.getLastBalance()).thenReturn(200.0);
-		when(trader.getTotalBalance()).thenReturn(399.9).thenReturn(400.1);
+		when(trader.getTotalBalance()).thenReturn(399.9).thenReturn(401.1).thenReturn(405.2);
+		when(trader.getTotalUPL()).thenReturn(-1.0).thenReturn(-1.5).thenReturn(-5.0);
+		when(trader.getBalanceReset()).thenCallRealMethod();
 		trader.lastBalanceReset();
 		verify(trader, times(1)).getLastBalance();
 		verify(trader, times(1)).getTotalBalance();
@@ -64,6 +66,11 @@ public class TestTrader {
 		trader.lastBalanceReset();
 		verify(trader, times(2)).getLastBalance();
 		verify(trader, times(2)).getTotalBalance();
+		verify(trader, never()).closeTrades();
+		verify(trader, never()).updateLastBalance();
+		trader.lastBalanceReset();
+		verify(trader, times(3)).getLastBalance();
+		verify(trader, times(3)).getTotalBalance();
 		verify(trader, times(1)).closeTrades();
 		verify(trader, times(1)).updateLastBalance();
 	}
