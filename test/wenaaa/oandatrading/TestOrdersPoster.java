@@ -41,7 +41,8 @@ public class TestOrdersPoster {
 		when(orderposter.getBid()).thenReturn(1.1100);
 		when(orderposter.getDistanceKoef()).thenReturn(4.0);
 
-		// BUY 0.0005 * 4 > 0.002 > needed two space > conflicting trade from 1.1105 to
+		// BUY 0.0005 * 4 > 0.002 > needed two space > conflicting trade from
+		// 1.1105 to
 		// 1.1145
 		when(orderposter.isBuyPair()).thenReturn(true);
 		final Order b = mock(Order.class);
@@ -51,7 +52,8 @@ public class TestOrdersPoster {
 		assertTrue(orderposter.isConflictingTrade(b));
 		assertFalse(orderposter.isConflictingTrade(b));
 
-		// SELL 0.0005 * 4 > 0.002 > needed two space > conflicting trade from 1.1060 to
+		// SELL 0.0005 * 4 > 0.002 > needed two space > conflicting trade from
+		// 1.1060 to
 		// 1.1100
 		when(orderposter.isBuyPair()).thenReturn(false);
 		final Order s = mock(Order.class);
@@ -171,10 +173,11 @@ public class TestOrdersPoster {
 		final Account acc = mock(Account.class);
 		when(orderposter.getAcc()).thenReturn(acc);
 		when(acc.getBalance()).thenReturn(1234.5).thenReturn(876.5);
-		// 1 * 1.2 * 1.3 * 1234.5 = 1925.82
-		assertEquals(1925, orderposter.getUnits());
-		// -1 * 0.7 * 1.3 * 876.5 = -797.615
-		assertEquals(-797, orderposter.getUnits());
+		when(acc.getUnrealizedPL()).thenReturn(-13.75).thenReturn(23.62);
+		// 1 * 1.2 * 1.3 * (1234.5 - 13.75) = 1904.37
+		assertEquals(1904, orderposter.getUnits());
+		// -1 * 0.7 * 1.3 * (876.5 + 23.62) = -819..1092
+		assertEquals(-819, orderposter.getUnits());
 	}
 
 	@Test

@@ -106,8 +106,9 @@ public class OrdersPoster {
 		final int buycoef = isBuyPair() ? 1 : -1;
 		final double ratecoef = getCoef();
 		final double riskcoef = PropertyManager.getRiskCoef();
-		final double balance = getAcc().getBalance();
-		final double answ = balance * buycoef * ratecoef * riskcoef;
+		final Account acc = getAcc();
+		final double nav = acc.getBalance() + acc.getUnrealizedPL();
+		final double answ = nav * buycoef * ratecoef * riskcoef;
 		return (long) answ;
 	}
 
