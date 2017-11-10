@@ -15,6 +15,7 @@ public class PropertyManager {
 	private static double distancekoef;
 	private static double resetBalanceRatio;
 	private static double riskCoef;
+	private static double minprofitcoef;
 
 	private PropertyManager() {
 
@@ -88,5 +89,13 @@ public class PropertyManager {
 
 	public static void setRiskCoef(final double rc) {
 		riskCoef = rc;
+	}
+
+	public static double getMinProfitCoef() {
+		return minprofitcoef;
+	}
+
+	public static void setMinProfitCoef(final double mpc) {
+		minprofitcoef = mpc;
 	}
 }

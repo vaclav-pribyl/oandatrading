@@ -31,6 +31,7 @@ public class PropertiesHandler extends DefaultHandler {
 	private boolean inDC;
 	private boolean inRBR;
 	private boolean inRC;
+	private boolean inMPC;
 
 	PropertiesHandler(final File pf) {
 		propertiesFile = pf;
@@ -72,6 +73,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inRBR = true;
 		} else if (qName.equals("riskcoef")) {
 			inRC = true;
+		} else if (qName.equals("minprofitcoef")) {
+			inMPC = true;
 		}
 	}
 
@@ -92,6 +95,8 @@ public class PropertiesHandler extends DefaultHandler {
 			PropertyManager.setResetBalanceRatio(Double.parseDouble(getCharString(ch, start, length)));
 		} else if (inRC) {
 			PropertyManager.setRiskCoef(Double.parseDouble(getCharString(ch, start, length)));
+		} else if (inMPC) {
+			PropertyManager.setMinProfitCoef(Double.parseDouble(getCharString(ch, start, length)));
 		}
 	}
 
@@ -120,6 +125,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inRBR = false;
 		} else if (qName.equals("riskcoef")) {
 			inRC = false;
+		} else if (qName.equals("minprofitcoef")) {
+			inMPC = false;
 		}
 	}
 }

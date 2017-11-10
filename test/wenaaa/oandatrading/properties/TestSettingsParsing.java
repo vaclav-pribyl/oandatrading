@@ -80,4 +80,9 @@ public class TestSettingsParsing {
 	public void parseRiskCoef() {
 		assertEquals(3.6, PropertyManager.getRiskCoef(), 1e-9);
 	}
+
+	@Test
+	public void parseMinProfitCoef() {
+		assertEquals(1.2, PropertyManager.getMinProfitCoef(), 1e-9);
+	}
 }

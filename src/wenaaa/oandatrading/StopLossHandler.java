@@ -28,9 +28,9 @@ public class StopLossHandler {
 	private final boolean buyPair;
 	private final SLHandlingProperties slHandling;
 	private final RateTable rateTable;
-	private Account account;
+	private final Account account;
 
-	public StopLossHandler(final TradedPair pair, final RateTable rateTable, Account acc) {
+	public StopLossHandler(final TradedPair pair, final RateTable rateTable, final Account acc) {
 		this.pair = pair.getName();
 		this.buyPair = pair.isBuyPair();
 		slHandling = PropertyManager.getSLHandlingProperties();
@@ -53,25 +53,22 @@ public class StopLossHandler {
 		return;
 	}
 
-	void applySL(double price) {
-		List<? extends MarketOrder> ot = getOpenTrades();
-		StopLossOrder slOrder = getSLOrder(price);
-		for(MarketOrder trade : ot){
-			if(isAcceptable(price,trade)){
-				try
-                {
+	void applySL(final double price) {
+		final List<? extends MarketOrder> ot = getOpenTrades();
+		final StopLossOrder slOrder = getSLOrder(price);
+		for (final MarketOrder trade : ot) {
+			if (isAcceptable(price, trade)) {
+				try {
 					LoggingUtils.logInfo("SSL > " + trade);
 					trade.setStopLoss(slOrder);
-                    getAcc().modify(trade);
-                    LoggingUtils.logInfo("OK");
-                }
-                catch (final OAException e)
-                {
-                    LoggingUtils.logInfo("Can't set SL > "+e.getMessage());
-                }
+					getAcc().modify(trade);
+					LoggingUtils.logInfo("OK");
+				} catch (final OAException e) {
+					LoggingUtils.logInfo("Can't set SL > " + e.getMessage());
+				}
 			}
 		}
-		
+
 	}
 
 	Account getAcc() {
@@ -82,45 +79,45 @@ public class StopLossHandler {
 		Vector trades;
 		try {
 			trades = getAcc().getTrades();
-		} catch (AccountException e) {
+		} catch (final AccountException e) {
 			LoggingUtils.logException(e);
-			LoggingUtils.logInfo("Can't get trade list: "+e.getMessage());
+			LoggingUtils.logInfo("Can't get trade list: " + e.getMessage());
 			return null;
 		}
-		List<MarketOrder> list = (List<MarketOrder>) trades.stream().filter(new Predicate<MarketOrder>()
-        {
+		final List<MarketOrder> list = (List<MarketOrder>) trades.stream().filter(new Predicate<MarketOrder>() {
 
-            @Override
-            public boolean test(final MarketOrder t)
-            {
-                return t.getPair().getPair().equals(getPair());
-            }
-        }).collect(Collectors.toList());
+			@Override
+			public boolean test(final MarketOrder t) {
+				return t.getPair().getPair().equals(getPair());
+			}
+		}).collect(Collectors.toList());
 		return list;
 	}
 
-	String getPair(){
+	String getPair() {
 		return pair;
 	}
-	
+
 	void log(final OAException e) {
 		LoggingUtils.logInfo("Can not set SL: " + e.getMessage());
 		LoggingUtils.logException(e);
 	}
 
-	boolean isAcceptable(double price, MarketOrder trade) {
-		if (isBuyPair())
-        {
-            return price > trade.getPrice() && price > trade.getStopLoss().getPrice();
-        }
-        if (trade.getStopLoss().getPrice() != 0)
-        {
-            return price < trade.getPrice() && price < trade.getStopLoss().getPrice();
-        }
-        return price < trade.getPrice();
+	boolean isAcceptable(final double price, final MarketOrder trade) {
+		if (isBuyPair()) {
+			return (price - trade.getPrice()) > getMinProfit() && price > trade.getStopLoss().getPrice();
+		}
+		if (trade.getStopLoss().getPrice() != 0) {
+			return (trade.getPrice() - price) > getMinProfit() && price < trade.getStopLoss().getPrice();
+		}
+		return (trade.getPrice() - price) > getMinProfit();
 	}
 
-	StopLossOrder getSLOrder(double price) {
+	double getMinProfit() {
+		return PropertyManager.getMinProfitCoef() * PropertyManager.getDistanceKoef() * getSpread();
+	}
+
+	StopLossOrder getSLOrder(final double price) {
 		return API.createStopLossOrder(price);
 	}
 
@@ -156,10 +153,14 @@ public class StopLossHandler {
 	}
 
 	double getSLspace() {
+		return getSpread() * slHandling.getAddedSpaceCoef();
+	}
+
+	double getSpread() {
 		final Instrument instrument = rateTable.getInstrument(pair);
 		final double ask = instrument.getAsk();
 		final double bid = instrument.getBid();
-		return (ask - bid) * slHandling.getAddedSpaceCoef();
+		return ask - bid;
 	}
 
 	List<CandlePoint> getcandles() throws OAException {
