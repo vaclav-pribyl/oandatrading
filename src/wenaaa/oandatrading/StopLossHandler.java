@@ -38,15 +38,10 @@ public class StopLossHandler {
 		account = acc;
 	}
 
-	public void handleSL() {
+	public void handleSL() throws OAException {
 		double price;
-		try {
-			price = getPrice();
-			if (price == 0) {
-				return;
-			}
-		} catch (final OAException e) {
-			log(e);
+		price = getPrice();
+		if (price == 0) {
 			return;
 		}
 		applySL(price);
@@ -105,12 +100,19 @@ public class StopLossHandler {
 
 	boolean isAcceptable(final double price, final MarketOrder trade) {
 		if (isBuyPair()) {
-			return (price - trade.getPrice()) > getMinProfit() && price > trade.getStopLoss().getPrice();
+			return (price - trade.getPrice()) > getMinProfit()
+					&& (price - trade.getStopLoss().getPrice()) >= getMinSLChange();
 		}
 		if (trade.getStopLoss().getPrice() != 0) {
-			return (trade.getPrice() - price) > getMinProfit() && price < trade.getStopLoss().getPrice();
+			return (trade.getPrice() - price) > getMinProfit()
+					&& (trade.getStopLoss().getPrice() - price) >= getMinSLChange();
 		}
 		return (trade.getPrice() - price) > getMinProfit();
+	}
+
+	double getMinSLChange() {
+		final Instrument instrument = rateTable.getInstrument(pair);
+		return instrument.getPIP() * 0.1;
 	}
 
 	double getMinProfit() {

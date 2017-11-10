@@ -27,6 +27,7 @@ import com.oanda.fxtrade.api.FXClient;
 import com.oanda.fxtrade.api.InvalidPasswordException;
 import com.oanda.fxtrade.api.InvalidUserException;
 import com.oanda.fxtrade.api.MultiFactorAuthenticationException;
+import com.oanda.fxtrade.api.OAException;
 import com.oanda.fxtrade.api.RateTable;
 import com.oanda.fxtrade.api.SessionDisconnectedException;
 import com.oanda.fxtrade.api.SessionException;
@@ -134,7 +135,7 @@ public class Trader implements Runnable, Observer {
 		}
 	}
 
-	protected void trade() throws AccountException {
+	protected void trade() throws OAException {
 		try {
 			if (infoCounter == 60) {
 				printInfo();
@@ -253,7 +254,7 @@ public class Trader implements Runnable, Observer {
 		}
 	}
 
-	protected void handleSL() {
+	protected void handleSL() throws OAException {
 		for (final Account acc : getAccounts()) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
 				new StopLossHandler(pair, rateTable, acc).handleSL();

@@ -24,13 +24,14 @@ import org.junit.Test;
 
 import com.oanda.fxtrade.api.Account;
 import com.oanda.fxtrade.api.AccountException;
+import com.oanda.fxtrade.api.OAException;
 
 import wenaaa.oandatrading.properties.PropertyManager;
 
 public class TestTrader {
 
 	@Test
-	public void testTrade() throws AccountException, InterruptedException {
+	public void testTrade() throws InterruptedException, OAException {
 		final Trader trader = mock(Trader.class);
 		doCallRealMethod().when(trader).trade();
 		final LocalDateTime past = LocalDateTime.now().minusSeconds(10);
