@@ -230,7 +230,7 @@ public class Trader implements Runnable, Observer {
 		return lastBalance;
 	}
 
-	void closeTrades() {
+	void closeTrades() throws AccountException {
 		new TradesCloser(accounts, rateTable).closeTrades();
 	}
 

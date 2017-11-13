@@ -33,16 +33,13 @@ public class TestStopLossHandler {
 	public void testHandleSL() throws OAException {
 		final StopLossHandler slhandler = mock(StopLossHandler.class);
 		final OAException t = new OAException();
-		when(slhandler.getPrice()).thenReturn(0.0).thenThrow(t).thenReturn(1.0);
+		when(slhandler.getPrice()).thenReturn(0.0).thenReturn(1.0);
 		doCallRealMethod().when(slhandler).handleSL();
 		slhandler.handleSL();
 		verify(slhandler, never()).applySL(any(Double.class));
 		verify(slhandler, never()).log(any(OAException.class));
 		slhandler.handleSL();
-		verify(slhandler, times(1)).log(t);
-		verify(slhandler, never()).applySL(any(Double.class));
-		slhandler.handleSL();
-		verify(slhandler, times(1)).log(t);
+		verify(slhandler, times(1)).applySL(any(Double.class));
 	}
 
 	@Test

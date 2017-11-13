@@ -1,6 +1,7 @@
 package wenaaa.oandatrading;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -16,6 +17,7 @@ import java.util.Vector;
 import org.junit.Test;
 
 import com.oanda.fxtrade.api.Account;
+import com.oanda.fxtrade.api.AccountException;
 import com.oanda.fxtrade.api.MarketOrder;
 import com.oanda.fxtrade.api.OAException;
 
@@ -30,7 +32,7 @@ public class TestTradesCloser {
 	}
 
 	@Test
-	public void testCloseTrades() {
+	public void testCloseTrades() throws AccountException {
 		final TradesCloser closer = mock(TradesCloser.class);
 		doCallRealMethod().when(closer).closeTrades();
 		final Collection<Account> accs = new ArrayList<Account>();
@@ -72,7 +74,7 @@ public class TestTradesCloser {
 		when(closer.getUPL(t1)).thenReturn(-2.3);
 		trades.add(t4);
 		when(closer.getTimeStop()).thenCallRealMethod();
-
+		when(closer.getPair(any(MarketOrder.class))).thenReturn("AUD/USD");
 		closer.closeAccountTrades(acc);
 
 		verify(acc, times(1)).close(t1);
