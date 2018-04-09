@@ -25,14 +25,14 @@ public class TestSettingsParsing {
 
 	@Test
 	public void parseAccounts() {
-		final Collection<Integer> accounts = PropertyManager.getAccounts();
+		final Collection<String> accounts = PropertyManager.getAccounts();
 		assertEquals(1, accounts.size());
-		assertTrue(accounts.contains(13));
+		assertTrue(accounts.contains("1-3"));
 	}
 
 	@Test
 	public void parseTradedPairs() {
-		final Collection<TradedPair> tp = PropertyManager.getTradedPairs(13);
+		final Collection<TradedPair> tp = PropertyManager.getTradedPairs("1-3");
 		assertEquals(3, tp.size());
 		assertTrue(tp.contains(new TradedPair("AUD/USD", "short")));
 		assertTrue(tp.contains(new TradedPair("AUD/CAD", "short")));
@@ -44,7 +44,8 @@ public class TestSettingsParsing {
 
 	@Test
 	public void parsePosition() {
-		final Collection<TradedPair> tp = PropertyManager.getTradedPairs(13);
+		final Collection<TradedPair> tp = PropertyManager.getTradedPairs("1-3");
+		assertEquals(3, tp.size());
 		for (final TradedPair pair : tp) {
 			if ("AUD/USD".equals(pair.getName())) {
 				assertEquals("long", pair.getPosition());
@@ -84,5 +85,10 @@ public class TestSettingsParsing {
 	@Test
 	public void parseMinProfitCoef() {
 		assertEquals(1.2, PropertyManager.getMinProfitCoef(), 1e-9);
+	}
+
+	@Test
+	public void parseLoginToken() {
+		assertEquals("12a3f", PropertyManager.getLoginToken());
 	}
 }

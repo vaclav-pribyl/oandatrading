@@ -20,18 +20,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Vector;
 
+import javax.security.auth.login.AccountException;
+
 import org.junit.Test;
 
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.OAException;
-
+import wenaaa.oandatrading.api.Account;
 import wenaaa.oandatrading.properties.PropertyManager;
 
 public class TestTrader {
 
 	@Test
-	public void testTrade() throws InterruptedException, OAException {
+	public void testTrade() throws InterruptedException {
 		final Trader trader = mock(Trader.class);
 		doCallRealMethod().when(trader).trade();
 		final LocalDateTime past = LocalDateTime.now().minusSeconds(10);
@@ -51,7 +50,7 @@ public class TestTrader {
 	}
 
 	@Test
-	public void testLastBalanceReset() throws AccountException {
+	public void testLastBalanceReset() {
 		final Trader trader = mock(Trader.class);
 		doCallRealMethod().when(trader).lastBalanceReset();
 		PropertyManager.setResetBalanceRatio(2);

@@ -4,16 +4,14 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.oanda.fxtrade.api.API;
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.FXPair;
-import com.oanda.fxtrade.api.LimitOrder;
-import com.oanda.fxtrade.api.Order;
-import com.oanda.fxtrade.api.RateTable;
-import com.oanda.fxtrade.api.RateTableException;
-
 import wenaaa.loginutils.LoggingUtils;
+import wenaaa.oandatrading.api.API;
+import wenaaa.oandatrading.api.Account;
+import wenaaa.oandatrading.api.FXPair;
+import wenaaa.oandatrading.api.LimitOrder;
+import wenaaa.oandatrading.api.Order;
+import wenaaa.oandatrading.api.RateTable;
+import wenaaa.oandatrading.api.TradeApiException;
 import wenaaa.oandatrading.properties.PropertyManager;
 import wenaaa.oandatrading.properties.TradedPair;
 
@@ -95,14 +93,14 @@ public class OrdersPoster {
 		try {
 			answ.addAll(getAcc().getTrades());
 			answ.addAll(getAcc().getOrders());
-		} catch (final AccountException e) {
+		} catch (final TradeApiException e) {
 			LoggingUtils.logException(e);
 			LoggingUtils.logInfo("Can't get orders and/or trades: " + e.getMessage());
 		}
 		return answ;
 	}
 
-	long getUnits() throws RateTableException, AccountException {
+	long getUnits() {
 		final int buycoef = isBuyPair() ? 1 : -1;
 		final double ratecoef = getCoef();
 		final double riskcoef = PropertyManager.getRiskCoef();
@@ -112,7 +110,7 @@ public class OrdersPoster {
 		return (long) answ;
 	}
 
-	double getCoef() throws RateTableException {
+	double getCoef() {
 		final FXPair fxpair = getUSDPair();
 		if (isUSDBased(fxpair)) {
 			return 1;

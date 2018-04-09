@@ -16,10 +16,8 @@ import java.util.Vector;
 
 import org.junit.Test;
 
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.MarketOrder;
-import com.oanda.fxtrade.api.OAException;
+import wenaaa.oandatrading.api.Account;
+import wenaaa.oandatrading.api.MarketOrder;
 
 public class TestTradesCloser {
 
@@ -32,7 +30,7 @@ public class TestTradesCloser {
 	}
 
 	@Test
-	public void testCloseTrades() throws AccountException {
+	public void testCloseTrades() {
 		final TradesCloser closer = mock(TradesCloser.class);
 		doCallRealMethod().when(closer).closeTrades();
 		final Collection<Account> accs = new ArrayList<Account>();
@@ -50,7 +48,7 @@ public class TestTradesCloser {
 	}
 
 	@Test
-	public void testCloseAccountTrades() throws OAException {
+	public void testCloseAccountTrades() {
 		final TradesCloser closer = mock(TradesCloser.class);
 		final Account acc = mock(Account.class);
 		doCallRealMethod().when(closer).closeAccountTrades(acc);

@@ -16,6 +16,7 @@ public class PropertyManager {
 	private static double resetBalanceRatio;
 	private static double riskCoef;
 	private static double minprofitcoef;
+	private static String loginToken;
 
 	private PropertyManager() {
 
@@ -27,19 +28,25 @@ public class PropertyManager {
 
 	public static void clearSettings() {
 		accounts.clear();
+		slProperties = null;
+		distancekoef = 0;
+		resetBalanceRatio = 0;
+		riskCoef = 0;
+		minprofitcoef = 0;
+		loginToken = "";
 	}
 
-	public static Collection<Integer> getAccounts() {
-		final Collection<Integer> answ = new ArrayList<>();
+	public static Collection<String> getAccounts() {
+		final Collection<String> answ = new ArrayList<>();
 		for (final AccountProperties acc : accounts) {
 			answ.add(acc.id);
 		}
 		return answ;
 	}
 
-	public static Collection<TradedPair> getTradedPairs(final int accountId) {
+	public static Collection<TradedPair> getTradedPairs(final String accountId) {
 		for (final AccountProperties acc : accounts) {
-			if (accountId == acc.id) {
+			if (accountId.equals(acc.id)) {
 				return Collections.unmodifiableCollection(acc.pairs);
 			}
 		}
@@ -54,13 +61,13 @@ public class PropertyManager {
 		slProperties = properties;
 	}
 
-	public static void addAccount(final int account_id) {
+	public static void addAccount(final String account_id) {
 		accounts.add(new AccountProperties(account_id));
 	}
 
-	public static void addTradedPair(final int account_id, final String pair, final String position) {
+	public static void addTradedPair(final String account_id, final String pair, final String position) {
 		for (final AccountProperties acc : accounts) {
-			if (acc.id == account_id) {
+			if (acc.id.equals(account_id)) {
 				acc.addPair(pair, position);
 				break;
 			}
@@ -77,6 +84,14 @@ public class PropertyManager {
 
 	public static double getResetBalanceRatio() {
 		return resetBalanceRatio;
+	}
+
+	public static String getLoginToken() {
+		return loginToken;
+	}
+
+	public static void setLoginToken(final String loginToken) {
+		PropertyManager.loginToken = loginToken;
 	}
 
 	public static void setResetBalanceRatio(final double rbr) {

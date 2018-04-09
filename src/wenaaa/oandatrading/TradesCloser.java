@@ -5,16 +5,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
-
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.MarketOrder;
-import com.oanda.fxtrade.api.OAException;
-import com.oanda.fxtrade.api.RateTable;
-import com.oanda.fxtrade.api.RateTableException;
 
 import wenaaa.loginutils.LoggingUtils;
+import wenaaa.oandatrading.api.Account;
+import wenaaa.oandatrading.api.MarketOrder;
+import wenaaa.oandatrading.api.RateTable;
+import wenaaa.oandatrading.api.TradeApiException;
 
 public class TradesCloser {
 
@@ -26,13 +22,13 @@ public class TradesCloser {
 		this.rateTable = rateTable;
 	}
 
-	public void closeTrades() throws AccountException {
+	public void closeTrades() {
 		for (final Account acc : getAccounts()) {
 			closeAccountTrades(acc);
 		}
 	}
 
-	void closeAccountTrades(final Account acc) throws AccountException {
+	void closeAccountTrades(final Account acc) {
 		final Map<String, MarketOrder> worsts = new HashMap<>();
 		for (final MarketOrder trade : getOpenTrades(acc)) {
 			if (hasSL(trade)) {
@@ -42,7 +38,7 @@ public class TradesCloser {
 				try {
 					LoggingUtils.logInfo("Closing too old > " + trade);
 					acc.close(trade);
-				} catch (final OAException e) {
+				} catch (final TradeApiException e) {
 					LoggingUtils.logInfo("Can't close trade " + e.getMessage());
 				}
 				continue;
@@ -56,7 +52,7 @@ public class TradesCloser {
 			try {
 				LoggingUtils.logInfo("Closing worst > " + worst);
 				acc.close(worst);
-			} catch (final OAException e) {
+			} catch (final TradeApiException e) {
 				LoggingUtils.logInfo("Can't close trade " + e.getMessage());
 			}
 		}
@@ -73,7 +69,7 @@ public class TradesCloser {
 	double getUPL(final MarketOrder trade) {
 		try {
 			return trade.getUnrealizedPL(getRateTable().getRate(trade.getPair()));
-		} catch (final RateTableException e) {
+		} catch (final TradeApiException e) {
 			return 0;
 		}
 	}
@@ -86,7 +82,7 @@ public class TradesCloser {
 		return accounts;
 	}
 
-	Vector<MarketOrder> getOpenTrades(final Account acc) throws AccountException {
+	Collection<MarketOrder> getOpenTrades(final Account acc) {
 		return acc.getTrades();
 	}
 

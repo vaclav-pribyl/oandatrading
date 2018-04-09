@@ -15,35 +15,35 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import javax.security.auth.login.AccountException;
+
 import org.junit.Test;
 
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.CandlePoint;
-import com.oanda.fxtrade.api.FXPair;
-import com.oanda.fxtrade.api.MarketOrder;
-import com.oanda.fxtrade.api.OAException;
-import com.oanda.fxtrade.api.StopLossOrder;
+import wenaaa.oandatrading.api.Account;
+import wenaaa.oandatrading.api.CandlePoint;
+import wenaaa.oandatrading.api.FXPair;
+import wenaaa.oandatrading.api.MarketOrder;
+import wenaaa.oandatrading.api.StopLossOrder;
+import wenaaa.oandatrading.api.TradeApiException;
 
 public class TestStopLossHandler {
 
 	private static final double slspace = 0.27;
 
 	@Test
-	public void testHandleSL() throws OAException {
+	public void testHandleSL() {
 		final StopLossHandler slhandler = mock(StopLossHandler.class);
-		final OAException t = new OAException();
 		when(slhandler.getPrice()).thenReturn(0.0).thenReturn(1.0);
 		doCallRealMethod().when(slhandler).handleSL();
 		slhandler.handleSL();
 		verify(slhandler, never()).applySL(any(Double.class));
-		verify(slhandler, never()).log(any(OAException.class));
+		verify(slhandler, never()).log(any(TradeApiException.class));
 		slhandler.handleSL();
 		verify(slhandler, times(1)).applySL(any(Double.class));
 	}
 
 	@Test
-	public void testGetPriceBuy() throws OAException {
+	public void testGetPriceBuy() {
 		final StopLossHandler slHandler = mock(StopLossHandler.class);
 		final List<CandlePoint> bl = getCLB();
 		when(slHandler.getcandles()).thenReturn(bl);
@@ -55,7 +55,7 @@ public class TestStopLossHandler {
 	}
 
 	@Test
-	public void testGetPriceSell() throws OAException {
+	public void testGetPriceSell() {
 		final StopLossHandler slHandler = mock(StopLossHandler.class);
 		final List<CandlePoint> sl = getCLS();
 		when(slHandler.getcandles()).thenReturn(sl);
@@ -100,7 +100,7 @@ public class TestStopLossHandler {
 	}
 
 	@Test
-	public void testApplySL() throws OAException {
+	public void testApplySL() {
 		final StopLossHandler slHandler = mock(StopLossHandler.class);
 		when(slHandler.getOpenTrades()).thenReturn(gOT());
 		final Account acc = mock(Account.class);

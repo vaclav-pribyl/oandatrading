@@ -13,22 +13,20 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
 import org.junit.Test;
 
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.FXPair;
-import com.oanda.fxtrade.api.FXTick;
-import com.oanda.fxtrade.api.LimitOrder;
-import com.oanda.fxtrade.api.MarketOrder;
-import com.oanda.fxtrade.api.OAException;
-import com.oanda.fxtrade.api.Order;
-import com.oanda.fxtrade.api.RateTable;
-import com.oanda.fxtrade.api.RateTableException;
-
+import wenaaa.oandatrading.api.Account;
+import wenaaa.oandatrading.api.FXPair;
+import wenaaa.oandatrading.api.FXTick;
+import wenaaa.oandatrading.api.LimitOrder;
+import wenaaa.oandatrading.api.MarketOrder;
+import wenaaa.oandatrading.api.Order;
+import wenaaa.oandatrading.api.RateTable;
+import wenaaa.oandatrading.api.TradeApiException;
 import wenaaa.oandatrading.properties.PropertyManager;
 
 public class TestOrdersPoster {
@@ -65,12 +63,12 @@ public class TestOrdersPoster {
 	}
 
 	@Test
-	public void testGetTradesAndOrders() throws AccountException {
+	public void testGetTradesAndOrders() {
 		final OrdersPoster orderposter = mock(OrdersPoster.class);
 		when(orderposter.getTradesAndOrders()).thenCallRealMethod();
 		final Account acc = mock(Account.class);
 		when(orderposter.getAcc()).thenReturn(acc);
-		final Vector<Order> trades = getTrades();
+		final Collection<MarketOrder> trades = getTrades();
 		when(acc.getTrades()).thenReturn(trades);
 		final Vector<Order> orders = getOrders();
 		when(acc.getOrders()).thenReturn(orders);
@@ -88,7 +86,7 @@ public class TestOrdersPoster {
 		}
 		assertEquals(2, nLO);
 		assertEquals(1, nMO);
-		when(acc.getTrades()).thenThrow(AccountException.class);
+		when(acc.getTrades()).thenThrow(TradeApiException.class);
 		assertEquals(0, orderposter.getTradesAndOrders().size());
 	}
 
@@ -99,8 +97,8 @@ public class TestOrdersPoster {
 		return answ;
 	}
 
-	private Vector<Order> getTrades() {
-		final Vector<Order> answ = new Vector<>();
+	private Collection<MarketOrder> getTrades() {
+		final Collection<MarketOrder> answ = new Vector<>();
 		answ.add(mock(MarketOrder.class));
 		return answ;
 	}
@@ -143,7 +141,7 @@ public class TestOrdersPoster {
 	}
 
 	@Test
-	public void testPostNewTrade() throws OAException {
+	public void testPostNewTrade() {
 		final OrdersPoster orderposter = mock(OrdersPoster.class);
 		doCallRealMethod().when(orderposter).postNewTrade();
 		final LimitOrder lo = mock(LimitOrder.class);
@@ -164,7 +162,7 @@ public class TestOrdersPoster {
 	}
 
 	@Test
-	public void testGetUnits() throws RateTableException, AccountException {
+	public void testGetUnits() {
 		final OrdersPoster orderposter = mock(OrdersPoster.class);
 		when(orderposter.getUnits()).thenCallRealMethod();
 		when(orderposter.isBuyPair()).thenReturn(true).thenReturn(false);
@@ -181,7 +179,7 @@ public class TestOrdersPoster {
 	}
 
 	@Test
-	public void testGetCoef() throws RateTableException {
+	public void testGetCoef() {
 		final OrdersPoster orderposter = mock(OrdersPoster.class);
 		when(orderposter.getCoef()).thenCallRealMethod();
 		final FXPair fxpair = mock(FXPair.class);

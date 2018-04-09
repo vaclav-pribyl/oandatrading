@@ -20,21 +20,13 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.oanda.fxtrade.api.API;
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.FXClient;
-import com.oanda.fxtrade.api.InvalidPasswordException;
-import com.oanda.fxtrade.api.InvalidUserException;
-import com.oanda.fxtrade.api.MultiFactorAuthenticationException;
-import com.oanda.fxtrade.api.OAException;
-import com.oanda.fxtrade.api.RateTable;
-import com.oanda.fxtrade.api.SessionDisconnectedException;
-import com.oanda.fxtrade.api.SessionException;
-import com.oanda.fxtrade.api.User;
-
 import wenaaa.loginutils.LoggingUtils;
 import wenaaa.loginutils.LoginData;
+import wenaaa.oandatrading.api.API;
+import wenaaa.oandatrading.api.Account;
+import wenaaa.oandatrading.api.FXClient;
+import wenaaa.oandatrading.api.RateTable;
+import wenaaa.oandatrading.api.User;
 import wenaaa.oandatrading.logging.InfoBuilder;
 import wenaaa.oandatrading.properties.PropertyManager;
 import wenaaa.oandatrading.properties.TradedPair;
@@ -119,23 +111,17 @@ public class Trader implements Runnable, Observer {
 			while (!stop) {
 				trade();
 			}
-		} catch (final InvalidPasswordException e) {
-			LoggingUtils.logException(e);
-			LoggingUtils.logInfo("Invalid password");
-			TradingApp.stop();
 		} catch (final Exception e) {
 			LoggingUtils.logException(e);
-			if (e.getCause() instanceof InvalidUserException) {
-				LoggingUtils.logInfo("Invalid user name or password.");
-				TradingApp.stop();
-			}
+			LoggingUtils.logInfo("Exception: " + e.getMessage());
+			TradingApp.stop();
 		} finally {
 			fxClient.logout();
 			tradeLock.unlock();
 		}
 	}
 
-	protected void trade() throws OAException {
+	protected void trade() {
 		try {
 			if (infoCounter == 60) {
 				printInfo();
@@ -168,7 +154,7 @@ public class Trader implements Runnable, Observer {
 		reportTime = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.DAYS).withHour(9);
 	}
 
-	protected void report() throws AccountException {
+	protected void report() {
 		final File reportFile = new File(REPORT_PATH);
 		try (FileWriter fw = new FileWriter(reportFile, true);
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -180,7 +166,7 @@ public class Trader implements Runnable, Observer {
 		}
 	}
 
-	void reportResults(final PrintWriter pw) throws AccountException {
+	void reportResults(final PrintWriter pw) {
 		final LocalDate date = LocalDate.now();
 		final StringBuilder sb = new StringBuilder(date.toString() + " ");
 		sb.append(getTotalBalance() + " ");
@@ -190,7 +176,7 @@ public class Trader implements Runnable, Observer {
 		pw.println(sb.toString());
 	}
 
-	int getTotalOrders() throws AccountException {
+	int getTotalOrders() {
 		int orders = 0;
 		for (final Account acc : getAccounts()) {
 			orders += acc.getOrders().size();
@@ -198,7 +184,7 @@ public class Trader implements Runnable, Observer {
 		return orders;
 	}
 
-	double getTotalUPL() throws AccountException {
+	double getTotalUPL() {
 		double upl = 0.0;
 		for (final Account acc : getAccounts()) {
 			upl += acc.getUnrealizedPL();
@@ -206,7 +192,7 @@ public class Trader implements Runnable, Observer {
 		return upl;
 	}
 
-	int getTotalTrades() throws AccountException {
+	int getTotalTrades() {
 		int trades = 0;
 		for (final Account acc : getAccounts()) {
 			trades += acc.getTrades().size();
@@ -214,7 +200,7 @@ public class Trader implements Runnable, Observer {
 		return trades;
 	}
 
-	protected void lastBalanceReset() throws AccountException {
+	protected void lastBalanceReset() {
 		final double nav = getTotalBalance() + getTotalUPL();
 		if (nav > getBalanceReset()) {
 			closeTrades();
@@ -230,11 +216,11 @@ public class Trader implements Runnable, Observer {
 		return lastBalance;
 	}
 
-	void closeTrades() throws AccountException {
+	void closeTrades() {
 		new TradesCloser(accounts, rateTable).closeTrades();
 	}
 
-	double getTotalBalance() throws AccountException {
+	double getTotalBalance() {
 		double balance = 0.0;
 		for (final Account acc : getAccounts()) {
 			balance += acc.getBalance();
@@ -254,7 +240,7 @@ public class Trader implements Runnable, Observer {
 		}
 	}
 
-	protected void handleSL() throws OAException {
+	protected void handleSL() {
 		for (final Account acc : getAccounts()) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
 				new StopLossHandler(pair, rateTable, acc).handleSL();
@@ -262,7 +248,7 @@ public class Trader implements Runnable, Observer {
 		}
 	}
 
-	protected void printInfo() throws AccountException {
+	protected void printInfo() {
 		final InfoBuilder timeIB = new InfoBuilder("Accounts data for");
 		timeIB.append(new Date(), true);
 		LoggingUtils.logInfo(timeIB.toString());
@@ -323,11 +309,10 @@ public class Trader implements Runnable, Observer {
 		LoggingUtils.logInfo(rbIB.toString());
 	}
 
-	protected void initOandaConnection() throws InvalidUserException, InvalidPasswordException, SessionException,
-			MultiFactorAuthenticationException {
+	protected void initOandaConnection() {
 		LoggingUtils.logInfo("Connecting...");
 		fxClient = API.createFXTrade();
-		fxClient.addObserver(this);
+		// fxClient.addObserver(this);
 		fxClient.setProxy(false);
 		fxClient.setWithRateThread(true);
 		fxClient.setWithKeepAliveThread(true);
@@ -340,27 +325,17 @@ public class Trader implements Runnable, Observer {
 
 	@Override
 	public void update(final Observable source, final Object status) {
-		try {
-			if (source == fxClient && status.equals(FXClient.CONNECTED)) {
-				setUser();
-				setAccounts();
-				if (getLastBalance() < 0) {
-					updateLastBalance();
-				}
-				setRateTable();
-			}
-		} catch (final SessionException e) {
-			LoggingUtils.logException(e);
-			stop();
-		} catch (final AccountException e) {
-			LoggingUtils.logException(e);
-			stop();
-			LoggingUtils.logInfo(e.getMessage());
-			TradingApp.stop();
-		}
+		/*
+		 * try { if (source == fxClient && status.equals(FXClient.CONNECTED)) {
+		 * setUser(); setAccounts(); if (getLastBalance() < 0) { updateLastBalance(); }
+		 * setRateTable(); } } catch (final SessionException e) {
+		 * LoggingUtils.logException(e); stop(); } catch (final AccountException e) {
+		 * LoggingUtils.logException(e); stop(); LoggingUtils.logInfo(e.getMessage());
+		 * TradingApp.stop(); }
+		 */
 	}
 
-	void updateLastBalance() throws AccountException {
+	void updateLastBalance() {
 		lastBalance = getTotalBalance();
 		storeLastBalance();
 	}
@@ -380,14 +355,14 @@ public class Trader implements Runnable, Observer {
 		LoggingUtils.logInfo(ib.toString());
 	}
 
-	void setRateTable() throws SessionDisconnectedException {
+	void setRateTable() {
 		LoggingUtils.logInfo("Fetching rate table...");
 		rateTable = fxClient.getRateTable();
 	}
 
-	void setAccounts() throws AccountException {
+	void setAccounts() {
 		LoggingUtils.logInfo("Setting account...");
-		for (final int acc_id : PropertyManager.getAccounts()) {
+		for (final String acc_id : PropertyManager.getAccounts()) {
 			final Account acc = user.getAccountWithId(acc_id);
 			getAccounts().add(acc);
 			final InfoBuilder ib = new InfoBuilder("Using account");
@@ -397,7 +372,7 @@ public class Trader implements Runnable, Observer {
 		}
 	}
 
-	void setUser() throws SessionException {
+	void setUser() {
 		LoggingUtils.logInfo("Setting user...");
 		user = fxClient.getUser();
 	}

@@ -1,23 +1,22 @@
 package wenaaa.oandatrading;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.oanda.fxtrade.api.API;
-import com.oanda.fxtrade.api.Account;
-import com.oanda.fxtrade.api.AccountException;
-import com.oanda.fxtrade.api.CandlePoint;
-import com.oanda.fxtrade.api.FXPair;
-import com.oanda.fxtrade.api.Instrument;
-import com.oanda.fxtrade.api.MarketOrder;
-import com.oanda.fxtrade.api.OAException;
-import com.oanda.fxtrade.api.RateTable;
-import com.oanda.fxtrade.api.StopLossOrder;
-
 import wenaaa.loginutils.LoggingUtils;
+import wenaaa.oandatrading.api.API;
+import wenaaa.oandatrading.api.Account;
+import wenaaa.oandatrading.api.CandlePoint;
+import wenaaa.oandatrading.api.FXPair;
+import wenaaa.oandatrading.api.Instrument;
+import wenaaa.oandatrading.api.MarketOrder;
+import wenaaa.oandatrading.api.RateTable;
+import wenaaa.oandatrading.api.StopLossOrder;
+import wenaaa.oandatrading.api.TradeApiException;
 import wenaaa.oandatrading.properties.PropertyManager;
 import wenaaa.oandatrading.properties.SLHandlingProperties;
 import wenaaa.oandatrading.properties.TradedPair;
@@ -38,7 +37,7 @@ public class StopLossHandler {
 		account = acc;
 	}
 
-	public void handleSL() throws OAException {
+	public void handleSL() {
 		double price;
 		price = getPrice();
 		if (price == 0) {
@@ -58,7 +57,7 @@ public class StopLossHandler {
 					trade.setStopLoss(slOrder);
 					getAcc().modify(trade);
 					LoggingUtils.logInfo("OK");
-				} catch (final OAException e) {
+				} catch (final TradeApiException e) {
 					LoggingUtils.logInfo("Can't set SL > " + e.getMessage());
 				}
 			}
@@ -71,15 +70,15 @@ public class StopLossHandler {
 	}
 
 	List<MarketOrder> getOpenTrades() {
-		Vector trades;
+		Collection<MarketOrder> trades;
 		try {
 			trades = getAcc().getTrades();
-		} catch (final AccountException e) {
+		} catch (final TradeApiException e) {
 			LoggingUtils.logException(e);
 			LoggingUtils.logInfo("Can't get trade list: " + e.getMessage());
-			return null;
+			return Collections.emptyList();
 		}
-		final List<MarketOrder> list = (List<MarketOrder>) trades.stream().filter(new Predicate<MarketOrder>() {
+		final List<MarketOrder> list = trades.stream().filter(new Predicate<MarketOrder>() {
 
 			@Override
 			public boolean test(final MarketOrder t) {
@@ -93,7 +92,7 @@ public class StopLossHandler {
 		return pair;
 	}
 
-	void log(final OAException e) {
+	void log(final TradeApiException e) {
 		LoggingUtils.logInfo("Can not set SL: " + e.getMessage());
 		LoggingUtils.logException(e);
 	}
@@ -123,7 +122,7 @@ public class StopLossHandler {
 		return API.createStopLossOrder(price);
 	}
 
-	double getPrice() throws OAException {
+	double getPrice() {
 		double answ = 0;
 		final List<CandlePoint> cpl = getcandles();
 		final CandlePoint lcc = cpl.get(cpl.size() - 2); // last closed candle
@@ -165,7 +164,7 @@ public class StopLossHandler {
 		return ask - bid;
 	}
 
-	List<CandlePoint> getcandles() throws OAException {
+	List<CandlePoint> getcandles() {
 		return new ArrayList<>(
 				rateTable.getCandles(getAPIPair(), slHandling.getTimeFrameValue(), slHandling.getCandles()));
 	}

@@ -1,6 +1,6 @@
 package wenaaa.oandatrading.properties;
 
-import com.oanda.fxtrade.api.FXClient;
+import wenaaa.oandatrading.api.API;
 
 public class SLHandlingProperties {
 
@@ -33,13 +33,13 @@ public class SLHandlingProperties {
 
 	private long getKoef() {
 		if (timeFrame.startsWith("M")) {
-			return FXClient.INTERVAL_1_MIN;
+			return API.INTERVAL_1_MIN;
 		}
 		if (timeFrame.startsWith("H")) {
-			return FXClient.INTERVAL_1_HOUR;
+			return API.INTERVAL_1_HOUR;
 		}
 		if (timeFrame.startsWith("D")) {
-			return FXClient.INTERVAL_1_DAY;
+			return API.INTERVAL_1_DAY;
 		}
 		return -1;
 	}

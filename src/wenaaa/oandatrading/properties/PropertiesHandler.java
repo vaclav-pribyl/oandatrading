@@ -15,11 +15,10 @@ import wenaaa.loginutils.LoggingUtils;
 
 public class PropertiesHandler extends DefaultHandler {
 
-	public static final int NO_ACCOUNT = -1;
 	public static final int NO_CANDLES = -1;
 	public static final float NO_ADDED_SPACE = Float.NEGATIVE_INFINITY;
 	private final File propertiesFile;
-	private int currAccount;
+	private String currAccount;
 	private boolean inPair = false;
 	private String currPosition;
 	private int candles;
@@ -32,6 +31,7 @@ public class PropertiesHandler extends DefaultHandler {
 	private boolean inRBR;
 	private boolean inRC;
 	private boolean inMPC;
+	private boolean inLT;
 
 	PropertiesHandler(final File pf) {
 		propertiesFile = pf;
@@ -51,7 +51,7 @@ public class PropertiesHandler extends DefaultHandler {
 	public void startElement(final String uri, final String localName, final String qName, final Attributes attributes)
 			throws SAXException {
 		if (qName.equals("account")) {
-			final int account_id = Integer.parseInt(attributes.getValue("id"));
+			final String account_id = attributes.getValue("id");
 			PropertyManager.addAccount(account_id);
 			currAccount = account_id;
 		} else if (qName.equals("pair")) {
@@ -75,6 +75,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inRC = true;
 		} else if (qName.equals("minprofitcoef")) {
 			inMPC = true;
+		} else if (qName.equals("logintoken")) {
+			inLT = true;
 		}
 	}
 
@@ -97,6 +99,8 @@ public class PropertiesHandler extends DefaultHandler {
 			PropertyManager.setRiskCoef(Double.parseDouble(getCharString(ch, start, length)));
 		} else if (inMPC) {
 			PropertyManager.setMinProfitCoef(Double.parseDouble(getCharString(ch, start, length)));
+		} else if (inLT) {
+			PropertyManager.setLoginToken(getCharString(ch, start, length));
 		}
 	}
 
@@ -107,7 +111,7 @@ public class PropertiesHandler extends DefaultHandler {
 	@Override
 	public void endElement(final String uri, final String localName, final String qName) throws SAXException {
 		if (qName.equals("account")) {
-			currAccount = NO_ACCOUNT;
+			currAccount = null;
 		} else if (qName.equals("pair")) {
 			inPair = false;
 			currPosition = null;
@@ -127,6 +131,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inRC = false;
 		} else if (qName.equals("minprofitcoef")) {
 			inMPC = false;
+		} else if (qName.equals("logintoken")) {
+			inLT = false;
 		}
 	}
 }

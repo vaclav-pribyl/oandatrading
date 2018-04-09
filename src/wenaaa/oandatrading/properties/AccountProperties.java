@@ -5,10 +5,10 @@ import java.util.Set;
 
 public class AccountProperties {
 
-	final int id;
+	final String id;
 	final Set<TradedPair> pairs;
 
-	AccountProperties(final int account_id) {
+	AccountProperties(final String account_id) {
 		this.id = account_id;
 		this.pairs = new HashSet<>();
 	}
@@ -21,7 +21,8 @@ public class AccountProperties {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + id;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((pairs == null) ? 0 : pairs.hashCode());
 		return result;
 	}
 
@@ -37,7 +38,18 @@ public class AccountProperties {
 			return false;
 		}
 		final AccountProperties other = (AccountProperties) obj;
-		if (id != other.id) {
+		if (id == null) {
+			if (other.id != null) {
+				return false;
+			}
+		} else if (!id.equals(other.id)) {
+			return false;
+		}
+		if (pairs == null) {
+			if (other.pairs != null) {
+				return false;
+			}
+		} else if (!pairs.equals(other.pairs)) {
 			return false;
 		}
 		return true;
