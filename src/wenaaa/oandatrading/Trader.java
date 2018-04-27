@@ -10,47 +10,37 @@ import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import wenaaa.loginutils.LoggingUtils;
-import wenaaa.loginutils.LoginData;
 import wenaaa.oandatrading.api.API;
 import wenaaa.oandatrading.api.Account;
-import wenaaa.oandatrading.api.FXClient;
-import wenaaa.oandatrading.api.RateTable;
-import wenaaa.oandatrading.api.User;
 import wenaaa.oandatrading.logging.InfoBuilder;
 import wenaaa.oandatrading.properties.PropertyManager;
 import wenaaa.oandatrading.properties.TradedPair;
 
-public class Trader implements Runnable, Observer {
+public class Trader implements Runnable {
 
 	private static final String LAST_BALANCE_PATH = "lastBalance";
 	private static final String REPORT_PATH = "results";
 	private final ReentrantLock tradeLock;
 	private boolean stop = false;
-	private FXClient fxClient;
-	private final LoginData loginData;
-	private User user;
-	private RateTable rateTable;
-	private final Collection<Account> accounts;
+	private final Set<Account> accounts;
 	private final Map<Account, Collection<TradedPair>> tradedPairs;
 	private double lastBalance;
 	private int infoCounter;
 	private LocalDateTime reportTime;
 
-	public Trader(final LoginData ld, final ReentrantLock tradeLock) {
+	public Trader(final ReentrantLock tradeLock) {
 		this.tradeLock = tradeLock;
-		this.loginData = ld;
-		accounts = new ArrayList<>();
+		accounts = new HashSet<>();
 		tradedPairs = new HashMap<>();
 		loadLastBalance();
 		setReportTime();
@@ -116,29 +106,23 @@ public class Trader implements Runnable, Observer {
 			LoggingUtils.logInfo("Exception: " + e.getMessage());
 			TradingApp.stop();
 		} finally {
-			fxClient.logout();
 			tradeLock.unlock();
 		}
 	}
 
 	protected void trade() {
-		try {
-			if (infoCounter == 60) {
-				printInfo();
-				lastBalanceReset();
-				infoCounter = 0;
-				if (LocalDateTime.now().isAfter(getReportTime())) {
-					report();
-					resetReportTime();
-				}
-			} else {
-				handleSL();
-				postOrders();
-				infoCounter++;
+		if (infoCounter == 60) {
+			lastBalanceReset();
+			infoCounter = 0;
+			if (LocalDateTime.now().isAfter(getReportTime())) {
+				report();
+				resetReportTime();
 			}
-			sleep(1000);
-		} catch (final InterruptedException e) {
-
+		} else {
+			printInfo();
+			handleSL();
+			postOrders();
+			infoCounter++;
 		}
 	}
 
@@ -179,7 +163,7 @@ public class Trader implements Runnable, Observer {
 	int getTotalOrders() {
 		int orders = 0;
 		for (final Account acc : getAccounts()) {
-			orders += acc.getOrders().size();
+			orders += acc.getOrdersCount();
 		}
 		return orders;
 	}
@@ -217,7 +201,7 @@ public class Trader implements Runnable, Observer {
 	}
 
 	void closeTrades() {
-		new TradesCloser(accounts, rateTable).closeTrades();
+		new TradesCloser(accounts).closeTrades();
 	}
 
 	double getTotalBalance() {
@@ -235,15 +219,15 @@ public class Trader implements Runnable, Observer {
 	protected void postOrders() {
 		for (final Account acc : getAccounts()) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
-				new OrdersPoster(pair, rateTable, acc).trade();
+				new OrdersPoster(pair, acc).trade();
 			}
 		}
 	}
 
-	protected void handleSL() {
+	void handleSL() {
 		for (final Account acc : getAccounts()) {
 			for (final TradedPair pair : tradedPairs.get(acc)) {
-				new StopLossHandler(pair, rateTable, acc).handleSL();
+				new StopLossHandler(pair, acc).handleSL();
 			}
 		}
 	}
@@ -286,7 +270,7 @@ public class Trader implements Runnable, Observer {
 			final int tr = acc.getTrades().size();
 			trades += tr;
 			tIB.append(tr, false);
-			final int o = acc.getOrders().size();
+			final int o = acc.getOrdersCount();
 			orders += o;
 			oIB.append(o, false);
 		}
@@ -311,28 +295,17 @@ public class Trader implements Runnable, Observer {
 
 	protected void initOandaConnection() {
 		LoggingUtils.logInfo("Connecting...");
-		fxClient = API.createFXTrade();
-		// fxClient.addObserver(this);
-		fxClient.setProxy(false);
-		fxClient.setWithRateThread(true);
-		fxClient.setWithKeepAliveThread(true);
-		fxClient.login(loginData.getLoginName(), loginData.getPassword());
+		API.init();
+		for (final String acc : PropertyManager.getAccounts()) {
+			accounts.add(API.createAccount(acc));
+		}
+		for (final Account acc : accounts) {
+			tradedPairs.put(acc, PropertyManager.getTradedPairs(acc.getID()));
+		}
 	}
 
 	public void stop() {
 		stop = true;
-	}
-
-	@Override
-	public void update(final Observable source, final Object status) {
-		/*
-		 * try { if (source == fxClient && status.equals(FXClient.CONNECTED)) {
-		 * setUser(); setAccounts(); if (getLastBalance() < 0) { updateLastBalance(); }
-		 * setRateTable(); } } catch (final SessionException e) {
-		 * LoggingUtils.logException(e); stop(); } catch (final AccountException e) {
-		 * LoggingUtils.logException(e); stop(); LoggingUtils.logInfo(e.getMessage());
-		 * TradingApp.stop(); }
-		 */
 	}
 
 	void updateLastBalance() {
@@ -357,24 +330,18 @@ public class Trader implements Runnable, Observer {
 
 	void setRateTable() {
 		LoggingUtils.logInfo("Fetching rate table...");
-		rateTable = fxClient.getRateTable();
 	}
 
 	void setAccounts() {
 		LoggingUtils.logInfo("Setting account...");
 		for (final String acc_id : PropertyManager.getAccounts()) {
-			final Account acc = user.getAccountWithId(acc_id);
+			final Account acc = API.createAccount(acc_id);
 			getAccounts().add(acc);
 			final InfoBuilder ib = new InfoBuilder("Using account");
 			ib.append(acc_id, true);
 			LoggingUtils.logInfo(ib.toString());
 			tradedPairs.put(acc, PropertyManager.getTradedPairs(acc_id));
 		}
-	}
-
-	void setUser() {
-		LoggingUtils.logInfo("Setting user...");
-		user = fxClient.getUser();
 	}
 
 }

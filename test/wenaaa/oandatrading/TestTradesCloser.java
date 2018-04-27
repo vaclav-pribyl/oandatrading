@@ -55,21 +55,21 @@ public class TestTradesCloser {
 		final Vector<MarketOrder> trades = new Vector<>();
 		when(closer.getOpenTrades(acc)).thenReturn(trades);
 		final MarketOrder t1 = mock(MarketOrder.class);// no sl one day old -3.3 upl
-		when(closer.hasSL(t1)).thenReturn(false);
+		when(t1.hasSL()).thenReturn(false);
 		when(t1.getTimestamp()).thenReturn(ZonedDateTime.now().minusDays(1).toEpochSecond());
-		when(closer.getUPL(t1)).thenReturn(-3.3);
+		when(t1.getUnrealizedPL()).thenReturn(-3.3);
 		trades.add(t1);
 		final MarketOrder t2 = mock(MarketOrder.class);// has SL
-		when(closer.hasSL(t2)).thenReturn(true);
+		when(t2.hasSL()).thenReturn(true);
 		trades.add(t2);
 		final MarketOrder t3 = mock(MarketOrder.class);// no sl 11 days old
-		when(closer.hasSL(t3)).thenReturn(false);
+		when(t3.hasSL()).thenReturn(false);
 		when(t3.getTimestamp()).thenReturn(ZonedDateTime.now().minusDays(11).toEpochSecond());
 		trades.add(t3);
 		final MarketOrder t4 = mock(MarketOrder.class);// no sl one day old -2.3 upl
-		when(closer.hasSL(t4)).thenReturn(false);
+		when(t4.hasSL()).thenReturn(false);
 		when(t4.getTimestamp()).thenReturn(ZonedDateTime.now().minusDays(1).toEpochSecond());
-		when(closer.getUPL(t1)).thenReturn(-2.3);
+		when(t1.getUnrealizedPL()).thenReturn(-2.3);
 		trades.add(t4);
 		when(closer.getTimeStop()).thenCallRealMethod();
 		when(closer.getPair(any(MarketOrder.class))).thenReturn("AUD/USD");
@@ -83,10 +83,10 @@ public class TestTradesCloser {
 		verify(t2, never()).getTimestamp();
 		verify(t3, times(1)).getTimestamp();
 		verify(t4, times(1)).getTimestamp();
-		verify(closer, times(1)).getUPL(t1);
-		verify(closer, never()).getUPL(t2);
-		verify(closer, never()).getUPL(t3);
-		verify(closer, times(1)).getUPL(t4);
+		verify(t1, times(1)).getUnrealizedPL();
+		verify(t2, never()).getUnrealizedPL();
+		verify(t3, never()).getUnrealizedPL();
+		verify(t4, times(1)).getUnrealizedPL();
 	}
 
 }

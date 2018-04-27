@@ -3,10 +3,7 @@ package wenaaa.oandatrading;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import wenaaa.loginutils.ConsoleLogin;
 import wenaaa.loginutils.LoggingUtils;
-import wenaaa.loginutils.LoginData;
-import wenaaa.loginutils.NoConsoleException;
 import wenaaa.oandatrading.properties.PropertyManager;
 
 /**
@@ -23,16 +20,12 @@ public class TradingApp {
 	public static void main(final String[] args) throws IOException {
 		try {
 			System.err.close();
-			final LoginData ld = getLoginData(args);
-			if (ld == null) {
-				return;
-			}
 
 			loadSettings();
 
 			startStopCondition();
 
-			trade(ld);
+			trade();
 		} catch (final Exception e) {
 			LoggingUtils.logException(e);
 		} finally {
@@ -54,12 +47,12 @@ public class TradingApp {
 		LoggingUtils.stopLogging();
 	}
 
-	private static void trade(final LoginData ld) {
+	private static void trade() {
 
 		while (!stop) {
 			try {
 				if (TRADE_LOCK.tryLock()) {
-					runTrader(ld);
+					runTrader();
 				}
 			} finally {
 				if (TRADE_LOCK.isHeldByCurrentThread()) {
@@ -89,22 +82,8 @@ public class TradingApp {
 		t.start();
 	}
 
-	private static LoginData getLoginData(final String[] args) {
-		LoginData ld;
-		try {
-			ld = ConsoleLogin.getLoginData();
-		} catch (final NoConsoleException e) {
-			if (args.length == 2) {
-				ld = new LoginData(args[0], args[1]);
-			} else {
-				ld = null;
-			}
-		}
-		return ld;
-	}
-
-	private static void runTrader(final LoginData ld) {
-		activeTrader = new Trader(ld, TRADE_LOCK);
+	private static void runTrader() {
+		activeTrader = new Trader(TRADE_LOCK);
 		new Thread(activeTrader).start();
 	}
 

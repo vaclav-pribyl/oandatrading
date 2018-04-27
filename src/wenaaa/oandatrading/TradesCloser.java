@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import wenaaa.loginutils.LoggingUtils;
+import wenaaa.oandatrading.api.API;
 import wenaaa.oandatrading.api.Account;
 import wenaaa.oandatrading.api.MarketOrder;
 import wenaaa.oandatrading.api.RateTable;
@@ -15,11 +16,9 @@ import wenaaa.oandatrading.api.TradeApiException;
 public class TradesCloser {
 
 	private final Collection<Account> accounts;
-	private final RateTable rateTable;
 
-	public TradesCloser(final Collection<Account> accounts, final RateTable rateTable) {
+	public TradesCloser(final Collection<Account> accounts) {
 		this.accounts = accounts;
-		this.rateTable = rateTable;
 	}
 
 	public void closeTrades() {
@@ -31,7 +30,7 @@ public class TradesCloser {
 	void closeAccountTrades(final Account acc) {
 		final Map<String, MarketOrder> worsts = new HashMap<>();
 		for (final MarketOrder trade : getOpenTrades(acc)) {
-			if (hasSL(trade)) {
+			if (trade.hasSL()) {
 				continue;
 			}
 			if (trade.getTimestamp() < getTimeStop()) {
@@ -44,7 +43,7 @@ public class TradesCloser {
 				continue;
 			}
 			final String pair = getPair(trade);
-			if (!worsts.containsKey(pair) || getUPL(trade) < getUPL(worsts.get(pair))) {
+			if (!worsts.containsKey(pair) || trade.getUnrealizedPL() < worsts.get(pair).getUnrealizedPL()) {
 				worsts.put(pair, trade);
 			}
 		}
@@ -62,20 +61,8 @@ public class TradesCloser {
 		return trade.getPair().getPair();
 	}
 
-	boolean hasSL(final MarketOrder trade) {
-		return trade.getStopLoss().getPrice() != 0;
-	}
-
-	double getUPL(final MarketOrder trade) {
-		try {
-			return trade.getUnrealizedPL(getRateTable().getRate(trade.getPair()));
-		} catch (final TradeApiException e) {
-			return 0;
-		}
-	}
-
-	RateTable getRateTable() {
-		return rateTable;
+	RateTable getRateTable(final Account acc) {
+		return API.createRateTable(acc.getID());
 	}
 
 	Collection<Account> getAccounts() {

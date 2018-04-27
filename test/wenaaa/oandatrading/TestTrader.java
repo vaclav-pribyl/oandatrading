@@ -42,7 +42,7 @@ public class TestTrader {
 		verify(trader, times(120)).handleSL();
 		verify(trader, times(120)).postOrders();
 		verify(trader, times(122)).sleep(1000);
-		verify(trader, times(2)).printInfo();
+		verify(trader, times(120)).printInfo();
 		verify(trader, times(2)).lastBalanceReset();
 		verify(trader, times(2)).getReportTime();
 		verify(trader, times(1)).report();
@@ -131,15 +131,9 @@ public class TestTrader {
 		final Account acc1 = mock(Account.class);
 		final Account acc2 = mock(Account.class);
 		final Account acc3 = mock(Account.class);
-		final Vector v1 = mock(Vector.class);
-		final Vector v2 = mock(Vector.class);
-		final Vector v3 = mock(Vector.class);
-		when(acc1.getOrders()).thenReturn(v1);
-		when(acc2.getOrders()).thenReturn(v2);
-		when(acc3.getOrders()).thenReturn(v3);
-		when(v1.size()).thenReturn(12);
-		when(v2.size()).thenReturn(100);
-		when(v3.size()).thenReturn(56);
+		when(acc1.getOrdersCount()).thenReturn(12);
+		when(acc2.getOrdersCount()).thenReturn(100);
+		when(acc3.getOrdersCount()).thenReturn(56);
 		accs.add(acc1);
 		accs.add(acc2);
 		accs.add(acc3);

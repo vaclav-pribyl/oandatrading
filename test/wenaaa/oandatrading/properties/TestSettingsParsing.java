@@ -1,6 +1,7 @@
 package wenaaa.oandatrading.properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -34,12 +35,12 @@ public class TestSettingsParsing {
 	public void parseTradedPairs() {
 		final Collection<TradedPair> tp = PropertyManager.getTradedPairs("1-3");
 		assertEquals(3, tp.size());
-		assertTrue(tp.contains(new TradedPair("AUD/USD", "short")));
-		assertTrue(tp.contains(new TradedPair("AUD/CAD", "short")));
-		assertTrue(tp.contains(new TradedPair("USD/CAD", "short")));
-		assertTrue(tp.contains(new TradedPair("AUD/USD", "long")));
-		assertTrue(tp.contains(new TradedPair("AUD/CAD", "long")));
-		assertTrue(tp.contains(new TradedPair("USD/CAD", "long")));
+		assertFalse(tp.contains(new TradedPair("AUD_USD", "short")));
+		assertTrue(tp.contains(new TradedPair("AUD_CAD", "short")));
+		assertTrue(tp.contains(new TradedPair("USD_CAD", "short")));
+		assertTrue(tp.contains(new TradedPair("AUD_USD", "long")));
+		assertFalse(tp.contains(new TradedPair("AUD_CAD", "long")));
+		assertFalse(tp.contains(new TradedPair("USD_CAD", "long")));
 	}
 
 	@Test
@@ -90,5 +91,10 @@ public class TestSettingsParsing {
 	@Test
 	public void parseLoginToken() {
 		assertEquals("12a3f", PropertyManager.getLoginToken());
+	}
+
+	@Test
+	public void parseRestapiUrl() {
+		assertEquals("http://rest-api.url", PropertyManager.getRestapiUrl());
 	}
 }

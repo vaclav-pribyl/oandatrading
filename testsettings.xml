@@ -3,13 +3,14 @@
 	<accounts>
 		<account id="1-3">
 			<tradedpairs>
-				<pair position="long">AUD/USD</pair>
-				<pair position="short">AUD/CAD</pair>
-				<pair position="short">USD/CAD</pair>
+				<pair position="long">AUD_USD</pair>
+				<pair position="short">AUD_CAD</pair>
+				<pair position="short">USD_CAD</pair>
 			</tradedpairs>
 		</account>
 	</accounts>
 	<logintoken>12a3f</logintoken>
+	<restapiurl>http://rest-api.url</restapiurl>
 	<stoplosshandling>
 		<candles>100</candles>
 		<addedspace>1.1</addedspace>

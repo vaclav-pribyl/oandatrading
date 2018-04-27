@@ -4,3 +4,4 @@ lib/oanda_fxtrade.jar
 *.log
 lastBalance
 /target/
+settings.xml

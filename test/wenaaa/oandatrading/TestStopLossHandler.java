@@ -13,18 +13,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
-
-import javax.security.auth.login.AccountException;
 
 import org.junit.Test;
 
 import wenaaa.oandatrading.api.Account;
 import wenaaa.oandatrading.api.CandlePoint;
-import wenaaa.oandatrading.api.FXPair;
 import wenaaa.oandatrading.api.MarketOrder;
-import wenaaa.oandatrading.api.StopLossOrder;
-import wenaaa.oandatrading.api.TradeApiException;
 
 public class TestStopLossHandler {
 
@@ -37,7 +31,6 @@ public class TestStopLossHandler {
 		doCallRealMethod().when(slhandler).handleSL();
 		slhandler.handleSL();
 		verify(slhandler, never()).applySL(any(Double.class));
-		verify(slhandler, never()).log(any(TradeApiException.class));
 		slhandler.handleSL();
 		verify(slhandler, times(1)).applySL(any(Double.class));
 	}
@@ -109,8 +102,7 @@ public class TestStopLossHandler {
 		when(slHandler.isAcceptable(any(Double.class), any(MarketOrder.class))).thenReturn(true).thenReturn(false)
 				.thenReturn(true).thenReturn(false).thenReturn(true);
 		slHandler.applySL(0);
-		verify(acc, times(3)).modify(any(MarketOrder.class));
-		verify(slHandler, times(1)).getSLOrder(0);
+		verify(acc, times(3)).modifySL(any(MarketOrder.class));
 	}
 
 	private List<MarketOrder> gOT() {
@@ -129,11 +121,9 @@ public class TestStopLossHandler {
 		when(slHandler.isAcceptable(any(Double.class), any(MarketOrder.class))).thenCallRealMethod();
 		when(slHandler.getMinProfit()).thenReturn(1.2);
 		when(slHandler.isBuyPair()).thenReturn(true);
-		final StopLossOrder slorder = mock(StopLossOrder.class);
-		when(slorder.getPrice()).thenReturn(3.0).thenReturn(1.0);
 		final MarketOrder trade = mock(MarketOrder.class);
 		when(trade.getPrice()).thenReturn(1.0).thenReturn(3.0);
-		when(trade.getStopLoss()).thenReturn(slorder);
+		when(trade.getStopLoss()).thenReturn(3.0).thenReturn(1.0);
 		assertFalse(slHandler.isAcceptable(2, trade));
 		assertFalse(slHandler.isAcceptable(2, trade));
 		assertFalse(slHandler.isAcceptable(0.5, trade));
@@ -147,72 +137,18 @@ public class TestStopLossHandler {
 		when(slHandler.isAcceptable(any(Double.class), any(MarketOrder.class))).thenCallRealMethod();
 		when(slHandler.isBuyPair()).thenReturn(false);
 		when(slHandler.getMinProfit()).thenReturn(1.2);
-		final StopLossOrder slorder = mock(StopLossOrder.class);
-		when(slorder.getPrice()).thenReturn(2.0).thenReturn(4.0);
 		final MarketOrder trade = mock(MarketOrder.class);
 		when(trade.getPrice()).thenReturn(4.0).thenReturn(2.0);
-		when(trade.getStopLoss()).thenReturn(slorder);
+		when(trade.getStopLoss()).thenReturn(2.0).thenReturn(4.0);
 		assertFalse(slHandler.isAcceptable(3, trade));
 		assertFalse(slHandler.isAcceptable(3, trade));
 		assertFalse(slHandler.isAcceptable(5, trade));
 		assertFalse(slHandler.isAcceptable(1, trade));
 		assertTrue(slHandler.isAcceptable(0.75, trade));
-		when(slorder.getPrice()).thenReturn(0.0);
+		when(trade.getStopLoss()).thenReturn(0.0);
 		when(trade.getPrice()).thenReturn(4.0);
 		assertFalse(slHandler.isAcceptable(3, trade));
 		assertTrue(slHandler.isAcceptable(2.75, trade));
 	}
 
-	@Test
-	public void testGetOpenTrades() throws AccountException {
-		final StopLossHandler slHandler = mock(StopLossHandler.class);
-		when(slHandler.getOpenTrades()).thenCallRealMethod();
-		final Account acc = getAcc();
-		when(slHandler.getAcc()).thenReturn(acc);
-		when(slHandler.getPair()).thenReturn("AUD/USD");
-		final List<MarketOrder> aul = slHandler.getOpenTrades();
-		checkOpenTrades(3, "AUD/USD", aul);
-		when(slHandler.getPair()).thenReturn("EUR/USD");
-		final List<MarketOrder> eul = slHandler.getOpenTrades();
-		checkOpenTrades(2, "EUR/USD", eul);
-		when(slHandler.getPair()).thenReturn("GBP/USD");
-		final List<MarketOrder> gul = slHandler.getOpenTrades();
-		checkOpenTrades(1, "GBP/USD", gul);
-		when(slHandler.getPair()).thenReturn("USD/CHF");
-		final List<MarketOrder> ucl = slHandler.getOpenTrades();
-		checkOpenTrades(0, "USD/CHF", ucl);
-	}
-
-	void checkOpenTrades(final int size, final String pair, final List<MarketOrder> l) {
-		assertEquals(size, l.size());
-		for (final MarketOrder t : l) {
-			assertEquals(pair, t.getPair().getPair());
-		}
-	}
-
-	private Account getAcc() throws AccountException {
-		final Account acc = mock(Account.class);
-		final Vector trades = getTrades();
-		when(acc.getTrades()).thenReturn(trades);
-		return acc;
-	}
-
-	private Vector getTrades() {
-		final Vector vec = new Vector<>();
-		vec.add(getMO("AUD/USD"));
-		vec.add(getMO("EUR/USD"));
-		vec.add(getMO("AUD/USD"));
-		vec.add(getMO("AUD/USD"));
-		vec.add(getMO("EUR/USD"));
-		vec.add(getMO("GBP/USD"));
-		return vec;
-	}
-
-	private Object getMO(final String pair) {
-		final MarketOrder mo = mock(MarketOrder.class);
-		final FXPair fxpair = mock(FXPair.class);
-		when(mo.getPair()).thenReturn(fxpair);
-		when(fxpair.getPair()).thenReturn(pair);
-		return mo;
-	}
 }

@@ -32,6 +32,7 @@ public class PropertiesHandler extends DefaultHandler {
 	private boolean inRC;
 	private boolean inMPC;
 	private boolean inLT;
+	private boolean inRAU;
 
 	PropertiesHandler(final File pf) {
 		propertiesFile = pf;
@@ -77,6 +78,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inMPC = true;
 		} else if (qName.equals("logintoken")) {
 			inLT = true;
+		} else if (qName.equals("restapiurl")) {
+			inRAU = true;
 		}
 	}
 
@@ -101,6 +104,8 @@ public class PropertiesHandler extends DefaultHandler {
 			PropertyManager.setMinProfitCoef(Double.parseDouble(getCharString(ch, start, length)));
 		} else if (inLT) {
 			PropertyManager.setLoginToken(getCharString(ch, start, length));
+		} else if (inRAU) {
+			PropertyManager.setRestapiUrl(getCharString(ch, start, length));
 		}
 	}
 
@@ -133,6 +138,8 @@ public class PropertiesHandler extends DefaultHandler {
 			inMPC = false;
 		} else if (qName.equals("logintoken")) {
 			inLT = false;
+		} else if (qName.equals("restapiurl")) {
+			inRAU = false;
 		}
 	}
 }

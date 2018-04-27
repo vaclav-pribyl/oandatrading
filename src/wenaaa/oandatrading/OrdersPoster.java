@@ -8,27 +8,24 @@ import wenaaa.loginutils.LoggingUtils;
 import wenaaa.oandatrading.api.API;
 import wenaaa.oandatrading.api.Account;
 import wenaaa.oandatrading.api.FXPair;
-import wenaaa.oandatrading.api.LimitOrder;
 import wenaaa.oandatrading.api.Order;
-import wenaaa.oandatrading.api.RateTable;
+import wenaaa.oandatrading.api.StopOrder;
 import wenaaa.oandatrading.api.TradeApiException;
 import wenaaa.oandatrading.properties.PropertyManager;
 import wenaaa.oandatrading.properties.TradedPair;
 
 public class OrdersPoster {
 
-	private final String pair;
 	private final boolean buyPair;
-	private final RateTable rateTable;
 	private final Account account;
 	private final double distance_koef;
+	private final FXPair fxPair;
 
-	public OrdersPoster(final TradedPair pair, final RateTable rateTable, final Account acc) {
-		this.pair = pair.getName();
+	public OrdersPoster(final TradedPair pair, final Account acc) {
 		this.buyPair = pair.isBuyPair();
-		this.rateTable = rateTable;
 		account = acc;
 		distance_koef = PropertyManager.getDistanceKoef();
+		fxPair = API.createFXPair(account.getID(), pair.getName());
 	}
 
 	public void trade() {
@@ -42,27 +39,27 @@ public class OrdersPoster {
 
 	void postNewTrade() {
 		try {
-			final LimitOrder limitOrder = createLimitOrder();
+			final StopOrder limitOrder = createStopOrder();
 
 			limitOrder.setPair(getPair());
 			limitOrder.setUnits(getUnits());
 			limitOrder.setPrice(getTradePrice());
-			limitOrder.setExpiry(ZonedDateTime.now().plusMonths(1).toEpochSecond());
+			limitOrder.setExpiry(ZonedDateTime.now().plusMonths(1));
 
-			LoggingUtils.logInfo("Submitting limit order..." + limitOrder);
+			LoggingUtils.logInfo("Submitting new order..." + limitOrder);
 			getAcc().execute(limitOrder);
-			LoggingUtils.logInfo("Limit order entered successfully");
+			LoggingUtils.logInfo("Order entered successfully");
 		} catch (final Exception e) {
-			LoggingUtils.logInfo("Error: limit order execution failed: " + e);
+			LoggingUtils.logInfo("Error: Order execution failed: " + e);
 		}
 	}
 
-	LimitOrder createLimitOrder() {
+	StopOrder createStopOrder() {
 		return API.createLimitOrder();
 	}
 
 	FXPair getPair() {
-		return API.createFXPair(pair);
+		return fxPair;
 	}
 
 	double getDistanceKoef() {
@@ -70,11 +67,11 @@ public class OrdersPoster {
 	}
 
 	double getAsk() {
-		return getRateTable().getInstrument(pair).getAsk();
+		return fxPair.getAsk();
 	}
 
 	double getBid() {
-		return getRateTable().getInstrument(pair).getBid();
+		return fxPair.getBid();
 	}
 
 	boolean isConflictingTrade(final Order trade) {
@@ -102,38 +99,12 @@ public class OrdersPoster {
 
 	long getUnits() {
 		final int buycoef = isBuyPair() ? 1 : -1;
-		final double ratecoef = getCoef();
+		final double ratecoef = getRateCoef();
 		final double riskcoef = PropertyManager.getRiskCoef();
 		final Account acc = getAcc();
 		final double nav = acc.getBalance() + acc.getUnrealizedPL();
 		final double answ = nav * buycoef * ratecoef * riskcoef;
 		return (long) answ;
-	}
-
-	double getCoef() {
-		final FXPair fxpair = getUSDPair();
-		if (isUSDBased(fxpair)) {
-			return 1;
-		}
-		final double rate = getRateTable().getRate(fxpair).getAsk();
-		return 1 / rate;
-	}
-
-	RateTable getRateTable() {
-		return rateTable;
-	}
-
-	FXPair getUSDPair() {
-		final FXPair fxpair = getPair();
-		if (isUSDBased(fxpair)) {
-			return fxpair;
-		}
-		fxpair.setQuote("USD");
-		return fxpair;
-	}
-
-	boolean isUSDBased(final FXPair fxpair) {
-		return "USD".equals(fxpair.getBase());
 	}
 
 	double getTradePrice() {
@@ -149,5 +120,9 @@ public class OrdersPoster {
 
 	boolean isBuyPair() {
 		return buyPair;
+	}
+
+	double getRateCoef() {
+		return fxPair.getRateCoef();
 	}
 }

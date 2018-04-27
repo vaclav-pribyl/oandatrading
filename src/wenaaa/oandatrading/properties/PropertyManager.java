@@ -1,7 +1,6 @@
 package wenaaa.oandatrading.properties;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,6 +16,7 @@ public class PropertyManager {
 	private static double riskCoef;
 	private static double minprofitcoef;
 	private static String loginToken;
+	private static String restapiUrl;
 
 	private PropertyManager() {
 
@@ -36,8 +36,8 @@ public class PropertyManager {
 		loginToken = "";
 	}
 
-	public static Collection<String> getAccounts() {
-		final Collection<String> answ = new ArrayList<>();
+	public static Set<String> getAccounts() {
+		final Set<String> answ = new HashSet<>();
 		for (final AccountProperties acc : accounts) {
 			answ.add(acc.id);
 		}
@@ -112,5 +112,13 @@ public class PropertyManager {
 
 	public static void setMinProfitCoef(final double mpc) {
 		minprofitcoef = mpc;
+	}
+
+	public static String getRestapiUrl() {
+		return restapiUrl;
+	}
+
+	public static void setRestapiUrl(final String restapiUrl) {
+		PropertyManager.restapiUrl = restapiUrl;
 	}
 }

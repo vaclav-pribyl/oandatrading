@@ -1,21 +1,16 @@
 package wenaaa.oandatrading;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import wenaaa.loginutils.LoggingUtils;
 import wenaaa.oandatrading.api.API;
 import wenaaa.oandatrading.api.Account;
 import wenaaa.oandatrading.api.CandlePoint;
 import wenaaa.oandatrading.api.FXPair;
-import wenaaa.oandatrading.api.Instrument;
 import wenaaa.oandatrading.api.MarketOrder;
 import wenaaa.oandatrading.api.RateTable;
-import wenaaa.oandatrading.api.StopLossOrder;
 import wenaaa.oandatrading.api.TradeApiException;
 import wenaaa.oandatrading.properties.PropertyManager;
 import wenaaa.oandatrading.properties.SLHandlingProperties;
@@ -28,13 +23,15 @@ public class StopLossHandler {
 	private final SLHandlingProperties slHandling;
 	private final RateTable rateTable;
 	private final Account account;
+	private final FXPair fxPair;
 
-	public StopLossHandler(final TradedPair pair, final RateTable rateTable, final Account acc) {
+	public StopLossHandler(final TradedPair pair, final Account acc) {
 		this.pair = pair.getName();
 		this.buyPair = pair.isBuyPair();
 		slHandling = PropertyManager.getSLHandlingProperties();
-		this.rateTable = rateTable;
+		this.rateTable = API.createRateTable(acc.getID());
 		account = acc;
+		fxPair = API.createFXPair(acc.getID(), pair.getName());
 	}
 
 	public void handleSL() {
@@ -49,13 +46,12 @@ public class StopLossHandler {
 
 	void applySL(final double price) {
 		final List<? extends MarketOrder> ot = getOpenTrades();
-		final StopLossOrder slOrder = getSLOrder(price);
 		for (final MarketOrder trade : ot) {
 			if (isAcceptable(price, trade)) {
 				try {
+					trade.setStopLossPrice(price);
 					LoggingUtils.logInfo("SSL > " + trade);
-					trade.setStopLoss(slOrder);
-					getAcc().modify(trade);
+					getAcc().modifySL(trade);
 					LoggingUtils.logInfo("OK");
 				} catch (final TradeApiException e) {
 					LoggingUtils.logInfo("Can't set SL > " + e.getMessage());
@@ -70,56 +66,36 @@ public class StopLossHandler {
 	}
 
 	List<MarketOrder> getOpenTrades() {
-		Collection<MarketOrder> trades;
 		try {
-			trades = getAcc().getTrades();
+			return getAcc().getTrades(pair);
 		} catch (final TradeApiException e) {
 			LoggingUtils.logException(e);
 			LoggingUtils.logInfo("Can't get trade list: " + e.getMessage());
 			return Collections.emptyList();
 		}
-		final List<MarketOrder> list = trades.stream().filter(new Predicate<MarketOrder>() {
-
-			@Override
-			public boolean test(final MarketOrder t) {
-				return t.getPair().getPair().equals(getPair());
-			}
-		}).collect(Collectors.toList());
-		return list;
 	}
 
 	String getPair() {
 		return pair;
 	}
 
-	void log(final TradeApiException e) {
-		LoggingUtils.logInfo("Can not set SL: " + e.getMessage());
-		LoggingUtils.logException(e);
-	}
-
 	boolean isAcceptable(final double price, final MarketOrder trade) {
+		final double stopLoss = trade.getStopLoss();
 		if (isBuyPair()) {
-			return (price - trade.getPrice()) > getMinProfit()
-					&& (price - trade.getStopLoss().getPrice()) >= getMinSLChange();
+			return (price - trade.getPrice()) > getMinProfit() && (price - stopLoss) >= getMinSLChange();
 		}
-		if (trade.getStopLoss().getPrice() != 0) {
-			return (trade.getPrice() - price) > getMinProfit()
-					&& (trade.getStopLoss().getPrice() - price) >= getMinSLChange();
+		if (stopLoss != 0) {
+			return (trade.getPrice() - price) > getMinProfit() && (stopLoss - price) >= getMinSLChange();
 		}
 		return (trade.getPrice() - price) > getMinProfit();
 	}
 
 	double getMinSLChange() {
-		final Instrument instrument = rateTable.getInstrument(pair);
-		return instrument.getPIP() * 0.1;
+		return Account.getPipette(pair);
 	}
 
 	double getMinProfit() {
 		return PropertyManager.getMinProfitCoef() * PropertyManager.getDistanceKoef() * getSpread();
-	}
-
-	StopLossOrder getSLOrder(final double price) {
-		return API.createStopLossOrder(price);
 	}
 
 	double getPrice() {
@@ -158,18 +134,17 @@ public class StopLossHandler {
 	}
 
 	double getSpread() {
-		final Instrument instrument = rateTable.getInstrument(pair);
-		final double ask = instrument.getAsk();
-		final double bid = instrument.getBid();
+		final double ask = fxPair.getAsk();
+		final double bid = fxPair.getBid();
 		return ask - bid;
 	}
 
 	List<CandlePoint> getcandles() {
-		return new ArrayList<>(
-				rateTable.getCandles(getAPIPair(), slHandling.getTimeFrameValue(), slHandling.getCandles()));
+		return new ArrayList<>(rateTable.getCandles(getAPIPair(), slHandling.getTimeFrame(), slHandling.getCandles()));
 	}
 
-	private FXPair getAPIPair() {
-		return API.createFXPair(pair);
+	FXPair getAPIPair() {
+		return fxPair;
 	}
+
 }

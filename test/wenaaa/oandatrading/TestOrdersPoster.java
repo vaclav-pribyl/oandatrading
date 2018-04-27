@@ -21,11 +21,9 @@ import org.junit.Test;
 
 import wenaaa.oandatrading.api.Account;
 import wenaaa.oandatrading.api.FXPair;
-import wenaaa.oandatrading.api.FXTick;
-import wenaaa.oandatrading.api.LimitOrder;
 import wenaaa.oandatrading.api.MarketOrder;
 import wenaaa.oandatrading.api.Order;
-import wenaaa.oandatrading.api.RateTable;
+import wenaaa.oandatrading.api.StopOrder;
 import wenaaa.oandatrading.api.TradeApiException;
 import wenaaa.oandatrading.properties.PropertyManager;
 
@@ -77,7 +75,7 @@ public class TestOrdersPoster {
 		int nLO = 0;
 		int nMO = 0;
 		for (final Order o : to) {
-			if (o instanceof LimitOrder) {
+			if (o instanceof StopOrder) {
 				nLO++;
 			}
 			if (o instanceof MarketOrder) {
@@ -92,8 +90,8 @@ public class TestOrdersPoster {
 
 	private Vector<Order> getOrders() {
 		final Vector<Order> answ = new Vector<>();
-		answ.add(mock(LimitOrder.class));
-		answ.add(mock(LimitOrder.class));
+		answ.add(mock(StopOrder.class));
+		answ.add(mock(StopOrder.class));
 		return answ;
 	}
 
@@ -134,7 +132,7 @@ public class TestOrdersPoster {
 
 	private List<Order> getTO() {
 		final List<Order> list = new ArrayList<>();
-		list.add(mock(LimitOrder.class));
+		list.add(mock(StopOrder.class));
 		list.add(mock(MarketOrder.class));
 		list.add(mock(MarketOrder.class));
 		return list;
@@ -144,20 +142,20 @@ public class TestOrdersPoster {
 	public void testPostNewTrade() {
 		final OrdersPoster orderposter = mock(OrdersPoster.class);
 		doCallRealMethod().when(orderposter).postNewTrade();
-		final LimitOrder lo = mock(LimitOrder.class);
-		when(orderposter.createLimitOrder()).thenReturn(lo);
+		final StopOrder lo = mock(StopOrder.class);
+		when(orderposter.createStopOrder()).thenReturn(lo);
 		final FXPair fxpair = mock(FXPair.class);
 		when(orderposter.getPair()).thenReturn(fxpair);
 		when(orderposter.getUnits()).thenReturn(-2L);
 		when(orderposter.getTradePrice()).thenReturn(1.123);
 		final Account acc = mock(Account.class);
 		when(orderposter.getAcc()).thenReturn(acc);
-		final long unixExpiry = ZonedDateTime.now().plusMonths(1).toEpochSecond();
+		final ZonedDateTime expiry = ZonedDateTime.now().plusMonths(1);
 		orderposter.postNewTrade();
 		verify(lo).setPair(fxpair);
 		verify(lo).setUnits(-2L);
 		verify(lo).setPrice(1.123);
-		verify(lo).setExpiry(unixExpiry);
+		verify(lo).setExpiry(expiry);
 		verify(acc).execute(lo);
 	}
 
@@ -166,7 +164,7 @@ public class TestOrdersPoster {
 		final OrdersPoster orderposter = mock(OrdersPoster.class);
 		when(orderposter.getUnits()).thenCallRealMethod();
 		when(orderposter.isBuyPair()).thenReturn(true).thenReturn(false);
-		when(orderposter.getCoef()).thenReturn(1.2).thenReturn(0.7);
+		when(orderposter.getRateCoef()).thenReturn(1.2).thenReturn(0.7);
 		PropertyManager.setRiskCoef(1.3);
 		final Account acc = mock(Account.class);
 		when(orderposter.getAcc()).thenReturn(acc);
@@ -178,45 +176,4 @@ public class TestOrdersPoster {
 		assertEquals(-819, orderposter.getUnits());
 	}
 
-	@Test
-	public void testGetCoef() {
-		final OrdersPoster orderposter = mock(OrdersPoster.class);
-		when(orderposter.getCoef()).thenCallRealMethod();
-		final FXPair fxpair = mock(FXPair.class);
-		when(orderposter.getUSDPair()).thenReturn(fxpair);
-		when(orderposter.isUSDBased(fxpair)).thenReturn(true).thenReturn(false);
-		final RateTable rt = mock(RateTable.class);
-		when(orderposter.getRateTable()).thenReturn(rt);
-		final FXTick tick = mock(FXTick.class);
-		when(rt.getRate(fxpair)).thenReturn(tick);
-		when(tick.getAsk()).thenReturn(0.753);
-		assertEquals(1, orderposter.getCoef(), 1e-6);
-		verify(orderposter, never()).getRateTable();
-		assertEquals(1 / 0.753, orderposter.getCoef(), 1e-6);
-		verify(orderposter, times(1)).getRateTable();
-	}
-
-	@Test
-	public void testGetUSDPair() {
-		final OrdersPoster orderposter = mock(OrdersPoster.class);
-		when(orderposter.getUSDPair()).thenCallRealMethod();
-		final FXPair pair = mock(FXPair.class);
-		when(orderposter.getPair()).thenReturn(pair);
-		when(orderposter.isUSDBased(pair)).thenReturn(true).thenReturn(false);
-		orderposter.getUSDPair();
-		verify(pair, never()).setQuote(any(String.class));
-		orderposter.getUSDPair();
-		verify(pair, times(1)).setQuote("USD");
-	}
-
-	@Test
-	public void testIsUSDBased() {
-		final OrdersPoster orderposter = mock(OrdersPoster.class);
-		final FXPair pair = mock(FXPair.class);
-		when(orderposter.isUSDBased(pair)).thenCallRealMethod();
-		when(pair.getQuote()).thenReturn("CAD").thenReturn("USD");
-		when(pair.getBase()).thenReturn("USD").thenReturn("CAD");
-		assertTrue(orderposter.isUSDBased(pair));
-		assertFalse(orderposter.isUSDBased(pair));
-	}
 }
